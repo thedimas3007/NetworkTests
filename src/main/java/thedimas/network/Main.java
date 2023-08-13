@@ -1,5 +1,9 @@
 package thedimas.network;
 
+import thedimas.network.packet.ConnectPacket;
+import thedimas.network.packet.Packet;
+import thedimas.network.packet.PlayerPacket;
+
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.logging.ConsoleHandler;
@@ -24,10 +28,22 @@ public class Main {
             try {
                 server.listen();
             } catch (Throwable t) {
-                Main.logger.severe("Unable to start server");
+                logger.severe("Unable to start server");
                 throw new RuntimeException(t);
             }
         }).start();
+
+        server.onPacket(ConnectPacket.class, (socket, packet) -> {
+            logger.info("[General] Connect packet " + packet + " from " + socket.getInetAddress().getHostAddress());
+        });
+
+        server.onPacket(ConnectPacket.class, (socket, packet) -> {
+            logger.info("[General] Connect packet2 " + packet + " from " + socket.getInetAddress().getHostAddress());
+        });
+
+        server.onPacket(PlayerPacket.class, (socket, packet) -> {
+            logger.info("[General] Player packet " + packet + " from " + socket.getInetAddress().getHostAddress());
+        });
 
         new Thread(() -> {
             try {

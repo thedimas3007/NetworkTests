@@ -1,14 +1,14 @@
 package thedimas.network;
 
-import thedimas.network.packet.ConnectPacket;
 import thedimas.network.packet.Packet;
-import thedimas.network.packet.PlayerPacket;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static thedimas.network.Main.logger;
@@ -17,6 +17,7 @@ import static thedimas.network.Main.logger;
 public class Server {
     private ServerSocket serverSocket;
     private final List<Socket> clients = new ArrayList<>();
+    private final Map<Class<? extends Packet>, List<BiConsumer<Socket, Packet>>> listeners = new ConcurrentHashMap<>();
     private boolean listening;
     private final int port;
 
@@ -39,10 +40,10 @@ public class Server {
                 try {
                     ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
                     clientHandler.received(packet -> {
-                        if (packet instanceof ConnectPacket) {
-                            logger.info("[Packets] New connection! " + packet);
-                        } else if (packet instanceof PlayerPacket playerPacket) {
-                            logger.info("[Packets] New player! " + playerPacket.getPlayer());
+                        logger.info("[Server] Packet received " + packet.getClass().getSimpleName());
+                        var list = listeners.get(packet.getClass());
+                        if (list != null) {
+                            list.forEach(listener -> listener.accept(clientSocket, packet));
                         }
                     });
                     clientHandler.run();
@@ -52,6 +53,10 @@ public class Server {
                 }
             }).start();
         }
+    }
+
+    public void onPacket(Class<? extends Packet> packet, BiConsumer<Socket, Packet> listener) {
+        listeners.computeIfAbsent(packet, k -> new CopyOnWriteArrayList<>()).add(listener);
     }
 
     public void close() throws IOException {
@@ -111,7 +116,7 @@ public class Server {
         }
 
         private void handle(Object object) {
-            logger.info("[Server] New object: " + object.toString());
+            logger.config("[Server] New object: " + object.toString());
             if (object instanceof Packet packet) {
                 listener.accept(packet);
             }

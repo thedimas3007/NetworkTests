@@ -35,9 +35,10 @@ public class Client {
 
     public void join(String name, String lang) {
         try {
-            ConnectPacket packet = new ConnectPacket()
-                    .withName(name)
-                    .withLang(lang);
+            ConnectPacket packet = ConnectPacket.builder()
+                    .name(name)
+                    .name(lang)
+                    .build();
             out.writeObject(packet);
         } catch (IOException e) {
             logger.severe("[Client] Unable to write Object");
