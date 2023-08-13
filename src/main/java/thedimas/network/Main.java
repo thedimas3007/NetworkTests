@@ -1,7 +1,6 @@
 package thedimas.network;
 
 import thedimas.network.packet.ConnectPacket;
-import thedimas.network.packet.Packet;
 import thedimas.network.packet.PlayerPacket;
 
 import java.io.IOException;
@@ -14,6 +13,7 @@ public class Main {
     public final static Logger logger = Logger.getLogger(Main.class.getName());
     private final static ConsoleHandler consoleHandler = new ConsoleHandler();
     private final static LogFormatter formatter = new LogFormatter();
+
     public static void main(String[] args) throws IOException, InterruptedException {
         consoleHandler.setLevel(Level.FINE);
         consoleHandler.setFormatter(formatter);
@@ -33,22 +33,18 @@ public class Main {
             }
         }).start();
 
-        server.onPacket(ConnectPacket.class, (socket, packet) -> {
-            logger.info("[General] Connect packet " + packet + " from " + socket.getInetAddress().getHostAddress());
-        });
+        server.onPacket(ConnectPacket.class, (socket, packet) ->
+                logger.info("[General] Connect packet " + packet + " from " + socket.getInetAddress().getHostAddress())
+        );
 
-        server.onPacket(ConnectPacket.class, (socket, packet) -> {
-            logger.info("[General] Connect packet2 " + packet + " from " + socket.getInetAddress().getHostAddress());
-        });
-
-        server.onPacket(PlayerPacket.class, (socket, packet) -> {
-            logger.info("[General] Player packet " + packet + " from " + socket.getInetAddress().getHostAddress());
-        });
+        server.onPacket(PlayerPacket.class, (socket, packet) ->
+                logger.info("[General] Player packet " + packet + " from " + socket.getInetAddress().getHostAddress())
+        );
 
         new Thread(() -> {
             try {
                 client.connect();
-                client.join("Vasia", "ru_RU");
+                client.join("John Doe", "ru_RU");
                 client.player();
             } catch (Throwable t) {
                 Main.logger.severe("[Client] Unable to connect");
@@ -63,7 +59,6 @@ public class Main {
                 logger.warning("Client disconnected");
                 server.close();
                 logger.warning("Server closed");
-                Thread.sleep(100);
                 break;
             }
         }

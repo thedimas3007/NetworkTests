@@ -2,7 +2,9 @@ package thedimas.network.packet;
 
 import lombok.*;
 
-/** Basic example packet based on {@link Packet} interface */
+/**
+ * Basic example packet based on {@link Packet} interface
+ */
 @Data
 @With
 @AllArgsConstructor

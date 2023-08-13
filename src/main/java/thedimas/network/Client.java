@@ -1,23 +1,23 @@
 package thedimas.network;
 
-import thedimas.network.type.Player;
 import thedimas.network.packet.ConnectPacket;
 import thedimas.network.packet.PlayerPacket;
+import thedimas.network.type.Player;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import static thedimas.network.Main.logger;
 
 @SuppressWarnings("unused")
 public class Client {
-    private Socket clientSocket;
-
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
-
     private final String ip;
     private final int port;
+    private Socket clientSocket;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     public Client(String ip, int port) {
         this.ip = ip;

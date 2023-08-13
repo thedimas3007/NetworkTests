@@ -2,10 +2,14 @@ package thedimas.network;
 
 import thedimas.network.packet.Packet;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
@@ -15,11 +19,11 @@ import static thedimas.network.Main.logger;
 
 @SuppressWarnings("unused")
 public class Server {
-    private ServerSocket serverSocket;
     private final List<Socket> clients = new ArrayList<>();
     private final Map<Class<? extends Packet>, List<BiConsumer<Socket, Packet>>> listeners = new ConcurrentHashMap<>();
-    private boolean listening;
     private final int port;
+    private ServerSocket serverSocket;
+    private boolean listening;
 
     public Server(int port) {
         this.port = port;
@@ -74,7 +78,8 @@ public class Server {
 
     private static class ServerClientHandler {
         private final Socket clientSocket;
-        private Consumer<Packet> listener = (packet) -> {};
+        private Consumer<Packet> listener = (packet) -> {
+        };
         private ObjectOutputStream out;
         private ObjectInputStream in;
         private boolean listening;
