@@ -6,13 +6,12 @@ import java.io.Serializable;
 
 
 @Data
-@With
 @AllArgsConstructor
 @Builder
 public class Player implements Serializable { // TODO: from mindustry.gen.Player
-    private String uuid;
-    private String name;
-    private String ip;
-    private String locale;
-    private Integer id;
+    private final String uuid;
+    private final String name;
+    private final String ip;
+    private final String locale;
+    private int id;
 }
