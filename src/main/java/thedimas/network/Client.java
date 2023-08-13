@@ -13,11 +13,8 @@ import static thedimas.network.Main.logger;
 public class Client {
     private Socket clientSocket;
 
-    private PrintWriter out;
-    private BufferedReader in;
-
-    private ObjectOutputStream outStr;
-    private ObjectInputStream inStr;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     private final String ip;
     private final int port;
@@ -31,11 +28,8 @@ public class Client {
         logger.info("[Client] Connecting...");
         clientSocket = new Socket(ip, port);
 
-        outStr = new ObjectOutputStream(clientSocket.getOutputStream());
-        inStr = new ObjectInputStream(clientSocket.getInputStream());
-
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        out = new ObjectOutputStream(clientSocket.getOutputStream());
+        in = new ObjectInputStream(clientSocket.getInputStream());
         logger.fine("[Client] Connected to " + ip);
     }
 
@@ -44,7 +38,7 @@ public class Client {
             ConnectPacket packet = new ConnectPacket()
                     .withName(name)
                     .withLang(lang);
-            outStr.writeObject(packet);
+            out.writeObject(packet);
         } catch (IOException e) {
             logger.severe("[Client] Unable to write Object");
             e.printStackTrace();
@@ -61,7 +55,7 @@ public class Client {
                 .id(228)
                 .build();
         packet.setPlayer(player);
-        outStr.writeObject(packet);
+        out.writeObject(packet);
     }
 
     public void disconnect() throws IOException {

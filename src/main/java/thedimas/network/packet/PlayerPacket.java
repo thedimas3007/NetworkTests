@@ -12,6 +12,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 @Builder
 @SuppressWarnings("unused")
-public class PlayerPacket implements Serializable {
+public class PlayerPacket implements Packet {
     private Player player;
 }
