@@ -14,11 +14,14 @@ repositories {
 }
 
 ext {
-    //the build number that this plugin is made for
     mindustryVersion = 'v145'
+    lombokVersion = '1.18.26'
 }
 
 dependencies {
+    annotationProcessor "org.projectlombok:lombok:$lombokVersion"
+    compileOnly "org.projectlombok:lombok:$lombokVersion"
+
     compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
     compileOnly "com.github.Anuken.Arc:arcnet:$mindustryVersion"
     compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"

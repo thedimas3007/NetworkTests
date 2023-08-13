@@ -26,10 +26,14 @@ public class Server {
     }
 
     public void listen() throws IOException {
+        logger.info("[Server] Starting...");
         listening = true;
 
         serverSocket = new ServerSocket(port);
+        logger.fine("[Server] Started");
+
         clientSocket = serverSocket.accept();
+        logger.info("[Server] New connection from " + clientSocket.getInetAddress().toString());
 
         outStr = new ObjectOutputStream(clientSocket.getOutputStream());
         inStr = new ObjectInputStream(clientSocket.getInputStream());
@@ -42,11 +46,11 @@ public class Server {
                 Object receivedObject = inStr.readObject();
                 handle(receivedObject);
             } catch (IOException e) {
-                logger.severe("Unable to read Object");
+                logger.severe("[Server] Unable to read Object");
                 e.printStackTrace();
                 break;
             } catch (ClassNotFoundException e) {
-                logger.severe("Class not found");
+                logger.severe("[Server] Class not found");
                 e.printStackTrace();
                 break;
             }
@@ -54,7 +58,7 @@ public class Server {
     }
 
     private void handle(Object object) {
-        logger.info(object.toString());
+        logger.info("[Server] New object: " + object.toString());
     }
 
     public void close() throws IOException {

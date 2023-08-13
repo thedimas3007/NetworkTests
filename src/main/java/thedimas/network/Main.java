@@ -22,7 +22,6 @@ public class Main {
 
         new Thread(() -> {
             try {
-                logger.info("Starting server");
                 server.listen();
             } catch (Throwable t) {
                 Main.logger.severe("Unable to start server");
@@ -32,12 +31,11 @@ public class Main {
 
         new Thread(() -> {
             try {
-                logger.info("Connecting to the server");
                 client.connect();
-                logger.fine("Connected to the server");
                 client.join("Vasia", "ru_RU");
+                client.player();
             } catch (Throwable t) {
-                Main.logger.severe("Unable to connect to the server");
+                Main.logger.severe("[Client] Unable to connect");
                 throw new RuntimeException(t);
             }
         }).start();
