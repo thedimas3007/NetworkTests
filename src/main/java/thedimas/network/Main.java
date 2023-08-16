@@ -1,7 +1,7 @@
 package thedimas.network;
 
-import thedimas.network.packet.ConnectPacket;
-import thedimas.network.packet.PlayerPacket;
+import thedimas.network.client.Client;
+import thedimas.network.server.Server;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -14,7 +14,7 @@ public class Main {
     private final static ConsoleHandler consoleHandler = new ConsoleHandler();
     private final static LogFormatter formatter = new LogFormatter();
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         consoleHandler.setLevel(Level.FINE);
         consoleHandler.setFormatter(formatter);
         logger.setUseParentHandlers(false);
@@ -26,20 +26,12 @@ public class Main {
 
         new Thread(() -> {
             try {
-                server.listen();
+                server.start();
             } catch (Throwable t) {
                 logger.severe("Unable to start server");
                 throw new RuntimeException(t);
             }
         }).start();
-
-        server.onPacket(ConnectPacket.class, (socket, packet) ->
-                logger.info("[General] Connect packet " + packet + " from " + socket.getInetAddress().getHostAddress())
-        );
-
-        server.onPacket(PlayerPacket.class, (socket, packet) ->
-                logger.info("[General] Player packet " + packet + " from " + socket.getInetAddress().getHostAddress())
-        );
 
         new Thread(() -> {
             try {
@@ -55,9 +47,7 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         while (true) {
             if (scanner.hasNext() && scanner.next().equals("exit")) {
-                client.disconnect();
-                logger.warning("Client disconnected");
-                server.close();
+                server.stop();
                 logger.warning("Server closed");
                 break;
             }

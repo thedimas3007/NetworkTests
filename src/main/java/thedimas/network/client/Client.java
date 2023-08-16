@@ -1,4 +1,4 @@
-package thedimas.network;
+package thedimas.network.client;
 
 import thedimas.network.packet.ConnectPacket;
 import thedimas.network.packet.PlayerPacket;
