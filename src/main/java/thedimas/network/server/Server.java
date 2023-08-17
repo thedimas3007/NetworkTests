@@ -45,7 +45,9 @@ public class Server {
                             logger.info("Packet received " + packet.getClass().getSimpleName());
                             listeners.forEach(l -> l.received(clientHandler, packet));
                         });
-                        clientHandler.disconnected(reason -> listeners.forEach(l -> l.disconnected(clientHandler, reason)));
+                        clientHandler.disconnected(reason ->
+                                listeners.forEach(l -> l.disconnected(clientHandler, reason))
+                        );
                         clientHandler.start();
                     } catch (IOException e) {
                         logger.severe("Failed to listen client " + ip);

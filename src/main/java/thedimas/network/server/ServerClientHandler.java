@@ -22,6 +22,7 @@ public class ServerClientHandler {
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private boolean listening;
+    private boolean disconnected;
 
     public ServerClientHandler(Socket socket) {
         this.socket = socket;
@@ -29,6 +30,7 @@ public class ServerClientHandler {
 
     void start() throws IOException {
         listening = true;
+        disconnected = false;
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
@@ -44,6 +46,7 @@ public class ServerClientHandler {
                 logger.warning("Connection closed");
                 handleDisconnect(DcReason.CONNECTION_CLOSED);
             }
+            disconnect();
         } catch (ClassNotFoundException e) {
             logger.severe("Class not found");
             e.printStackTrace();
@@ -57,6 +60,7 @@ public class ServerClientHandler {
     public void disconnect() {
         try {
             listening = false;
+            disconnected = true;
             if (in != null) in.close();
             if (out != null) out.close();
             socket.close();
@@ -78,6 +82,7 @@ public class ServerClientHandler {
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
+                disconnect();
             } else {
                 packetListener.accept(packet);
             }
@@ -85,8 +90,9 @@ public class ServerClientHandler {
     }
 
     private void handleDisconnect(DcReason reason) {
-        logger.warning("Disconnected: " + reason.name());
-        disconnectListener.accept(reason);
+        if (!disconnected) {
+            logger.warning("Disconnected: " + reason.name());
+            disconnectListener.accept(reason);
+        }
     }
-
 }
