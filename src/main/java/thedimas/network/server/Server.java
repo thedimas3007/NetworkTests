@@ -25,11 +25,11 @@ public class Server {
     }
 
     public void start() throws IOException {
-        logger.info("[Server] Starting...");
+        logger.info("Starting...");
         listening = true;
         serverSocket = new ServerSocket(port);
+        logger.fine("Started");
         listeners.forEach(ServerListener::started);
-        logger.fine("[Server] Started");
         try {
             while (listening) {
                 Socket clientSocket = serverSocket.accept();
@@ -37,23 +37,25 @@ public class Server {
                 String ip = clientSocket.getInetAddress().getHostAddress();
                 listeners.forEach(ServerListener::stopped);
                 clients.add(clientHandler);
-                listeners.forEach(l -> l.connected(clientSocket));
-                logger.info("[Server] New connection from " + ip);
+                listeners.forEach(l -> l.connected(clientHandler));
+                logger.info("New connection from " + ip);
                 new Thread(() -> {
                     try {
                         clientHandler.received(packet -> {
-                            logger.info("[Server] Packet received " + packet.getClass().getSimpleName());
+                            logger.info("Packet received " + packet.getClass().getSimpleName());
                             listeners.forEach(l -> l.received(clientHandler, packet));
                         });
+                        clientHandler.disconnected(reason -> listeners.forEach(l -> l.disconnected(clientHandler, reason)));
                         clientHandler.start();
                     } catch (IOException e) {
-                        logger.severe("[Server] Failed to listen client " + ip);
-                        throw new RuntimeException("Failed to listen client " + ip);
+                        logger.severe("Failed to listen client " + ip);
+                        e.printStackTrace();
+                        clientHandler.disconnect();
                     }
                 }).start();
             }
         } catch (SocketException e) {
-            logger.warning("[Server] Socket closed");
+            logger.warning("Socket closed");
             e.printStackTrace();
         }
     }
@@ -69,7 +71,7 @@ public class Server {
                 client.send(new DisconnectPacket(DcReason.SERVER_CLOSED));
                 client.disconnect();
             } catch (IOException e) {
-                logger.severe("[Server] Failed to close client " + client.getSocket().getInetAddress().getHostAddress());
+                logger.severe("Failed to close client " + client.getSocket().getInetAddress().getHostAddress());
                 throw new RuntimeException(e);
             }
         });

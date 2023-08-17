@@ -1,5 +1,6 @@
 package thedimas.network.enums;
 
+@SuppressWarnings("unused")
 public enum DcReason {
     /** When the client forcefully closes connection. */
     CONNECTION_CLOSED,
@@ -9,6 +10,9 @@ public enum DcReason {
 
     /** Is sent to all clients when the server is shutting down */
     SERVER_CLOSED,
+
+    /** Usually is not sent to clients but only to listeners */
+    STREAM_CORRUPTED,
     TIMEOUT,
-    PACKET_SPAM; // TODO: implement spam detection
+    PACKET_SPAM // TODO: implement spam detection
 }

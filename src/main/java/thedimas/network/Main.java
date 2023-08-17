@@ -14,13 +14,16 @@ public class Main {
     private final static ConsoleHandler consoleHandler = new ConsoleHandler();
     private final static LogFormatter formatter = new LogFormatter();
 
-    public static void main(String[] args) throws IOException {
+    static {
         consoleHandler.setLevel(Level.FINE);
         consoleHandler.setFormatter(formatter);
         logger.setUseParentHandlers(false);
         logger.addHandler(consoleHandler);
         logger.setLevel(Level.FINE);
 
+    }
+
+    public static void main(String[] args) throws IOException {
         Server server = new Server(1234);
         Client client = new Client("127.0.0.1", 1234);
 
@@ -37,7 +40,7 @@ public class Main {
             try {
                 client.connect();
             } catch (Throwable t) {
-                Main.logger.severe("[Client] Unable to connect");
+                Main.logger.severe("Unable to connect");
                 throw new RuntimeException(t);
             }
         }).start();

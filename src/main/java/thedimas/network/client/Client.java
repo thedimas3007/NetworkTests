@@ -25,12 +25,12 @@ public class Client {
     }
 
     public void connect() throws IOException {
-        logger.info("[Client] Connecting...");
+        logger.info("Connecting...");
         clientSocket = new Socket(ip, port);
 
         out = new ObjectOutputStream(clientSocket.getOutputStream());
         in = new ObjectInputStream(clientSocket.getInputStream());
-        logger.fine("[Client] Connected to " + ip);
+        logger.fine("Connected to " + ip);
     }
 
     public void send(Packet packet) throws IOException {
@@ -44,7 +44,7 @@ public class Client {
             out.close();
             clientSocket.close();
         } catch (IOException e) {
-            logger.severe("[Client] Error while disconnecting");
+            logger.severe("Error while disconnecting");
         }
     }
 }

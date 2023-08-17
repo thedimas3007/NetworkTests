@@ -43,6 +43,14 @@ public class LogFormatter extends Formatter {
                 .append(AnsiCodes.RESET)
                 .append(" ");
 
+        String[] split = record.getSourceClassName().split("\\.");
+        formattedLog.append(AnsiCodes.DIM)
+                .append("[")
+                .append(split[split.length - 1])
+                .append("]")
+                .append(AnsiCodes.RESET)
+                .append(" ");
+
         formattedLog.append(record.getMessage())
                 .append("\n");
 
