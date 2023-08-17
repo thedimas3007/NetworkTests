@@ -15,7 +15,7 @@ import static thedimas.network.Main.logger;
 public class Client {
     private final String ip;
     private final int port;
-    private Socket clientSocket;
+    private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -26,10 +26,10 @@ public class Client {
 
     public void connect() throws IOException {
         logger.info("Connecting...");
-        clientSocket = new Socket(ip, port);
+        socket = new Socket(ip, port);
 
-        out = new ObjectOutputStream(clientSocket.getOutputStream());
-        in = new ObjectInputStream(clientSocket.getInputStream());
+        out = new ObjectOutputStream(socket.getOutputStream());
+        in = new ObjectInputStream(socket.getInputStream());
         logger.fine("Connected to " + ip);
     }
 
@@ -42,7 +42,7 @@ public class Client {
             out.writeObject(new DisconnectPacket(DcReason.DISCONNECTED));
             in.close();
             out.close();
-            clientSocket.close();
+            socket.close();
         } catch (IOException e) {
             logger.severe("Error while disconnecting");
         }
