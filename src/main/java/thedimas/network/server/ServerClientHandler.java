@@ -1,6 +1,8 @@
 package thedimas.network.server;
 
 import lombok.Getter;
+import thedimas.network.enums.DcReason;
+import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
 
 import java.io.IOException;
@@ -48,21 +50,33 @@ public class ServerClientHandler {
         out.writeObject(packet);
     }
 
-    public void disconnect() throws IOException {
-        listening = false;
-        in.close();
-        out.close();
-        socket.close();
+    public void disconnect() {
+        try {
+            listening = false;
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            logger.severe("[Server] Error while disconnecting client " + socket.getInetAddress().getHostAddress());
+        }
     }
 
     void received(Consumer<Packet> consumer) { // TODO: List of consumers
         listener = consumer;
     }
-
     void handle(Object object) {
         logger.config("[Server] New object: " + object.toString());
         if (object instanceof Packet packet) {
-            listener.accept(packet);
+            if (packet instanceof DisconnectPacket disconnectPacket) {
+                handleDisconnect(disconnectPacket.getReason());
+            } else {
+                listener.accept(packet);
+            }
         }
     }
+
+    private void handleDisconnect(DcReason reason) {
+        logger.warning("Disconnected: " + reason.name());
+    }
+
 }

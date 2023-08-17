@@ -6,6 +6,7 @@ import thedimas.network.packet.DisconnectPacket;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,27 +30,31 @@ public class Server {
         serverSocket = new ServerSocket(port);
         listeners.forEach(ServerListener::started);
         logger.fine("[Server] Started");
-
-        while (listening) {
-            Socket clientSocket = serverSocket.accept();
-            ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
-            String ip = clientSocket.getInetAddress().getHostAddress();
-            listeners.forEach(ServerListener::stopped);
-            clients.add(clientHandler);
-            listeners.forEach(l -> l.connected(clientSocket));
-            logger.info("[Server] New connection from " + ip);
-            new Thread(() -> {
-                try {
-                    clientHandler.received(packet -> {
-                        logger.info("[Server] Packet received " + packet.getClass().getSimpleName());
-                        listeners.forEach(l -> l.received(clientHandler, packet));
-                    });
-                    clientHandler.start();
-                } catch (IOException e) {
-                    logger.severe("Failed to listen client " + ip);
-                    throw new RuntimeException("Failed to listen client " + ip);
-                }
-            }).start();
+        try {
+            while (listening) {
+                Socket clientSocket = serverSocket.accept();
+                ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
+                String ip = clientSocket.getInetAddress().getHostAddress();
+                listeners.forEach(ServerListener::stopped);
+                clients.add(clientHandler);
+                listeners.forEach(l -> l.connected(clientSocket));
+                logger.info("[Server] New connection from " + ip);
+                new Thread(() -> {
+                    try {
+                        clientHandler.received(packet -> {
+                            logger.info("[Server] Packet received " + packet.getClass().getSimpleName());
+                            listeners.forEach(l -> l.received(clientHandler, packet));
+                        });
+                        clientHandler.start();
+                    } catch (IOException e) {
+                        logger.severe("[Server] Failed to listen client " + ip);
+                        throw new RuntimeException("Failed to listen client " + ip);
+                    }
+                }).start();
+            }
+        } catch (SocketException e) {
+            logger.warning("[Server] Socket closed");
+            e.printStackTrace();
         }
     }
 

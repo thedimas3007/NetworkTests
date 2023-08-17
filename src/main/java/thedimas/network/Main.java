@@ -36,8 +36,6 @@ public class Main {
         new Thread(() -> {
             try {
                 client.connect();
-                client.join("John Doe", "ru_RU");
-                client.player();
             } catch (Throwable t) {
                 Main.logger.severe("[Client] Unable to connect");
                 throw new RuntimeException(t);

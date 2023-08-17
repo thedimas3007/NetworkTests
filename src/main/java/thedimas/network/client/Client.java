@@ -1,8 +1,8 @@
 package thedimas.network.client;
 
-import thedimas.network.packet.ConnectPacket;
-import thedimas.network.packet.PlayerPacket;
-import thedimas.network.type.Player;
+import thedimas.network.enums.DcReason;
+import thedimas.network.packet.DisconnectPacket;
+import thedimas.network.packet.Packet;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -33,35 +33,18 @@ public class Client {
         logger.fine("[Client] Connected to " + ip);
     }
 
-    public void join(String name, String lang) {
-        try {
-            ConnectPacket packet = ConnectPacket.builder()
-                    .name(name)
-                    .name(lang)
-                    .build();
-            out.writeObject(packet);
-        } catch (IOException e) {
-            logger.severe("[Client] Unable to write Object");
-            e.printStackTrace();
-        }
-    }
-
-    public void player() throws IOException {
-        PlayerPacket packet = new PlayerPacket();
-        Player player = Player.builder()
-                .uuid("ajoweur2344anghEPOIWUHP==")
-                .name("name")
-                .ip("127.0.0.1")
-                .locale("ru_RU")
-                .id(228)
-                .build();
-        packet.setPlayer(player);
+    public void send(Packet packet) throws IOException {
         out.writeObject(packet);
     }
 
-    public void disconnect() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
+    public void disconnect() {
+        try {
+            out.writeObject(new DisconnectPacket(DcReason.DISCONNECTED));
+            in.close();
+            out.close();
+            clientSocket.close();
+        } catch (IOException e) {
+            logger.severe("[Client] Error while disconnecting");
+        }
     }
 }
