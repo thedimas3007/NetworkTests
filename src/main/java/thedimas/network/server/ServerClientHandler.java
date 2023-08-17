@@ -8,6 +8,7 @@ import thedimas.network.packet.Packet;
 import java.io.*;
 import java.net.Socket;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
@@ -24,11 +25,11 @@ public class ServerClientHandler {
     private boolean listening;
     private boolean disconnected;
 
-    public ServerClientHandler(Socket socket) {
+    ServerClientHandler(Socket socket) {
         this.socket = socket;
     }
 
-    void start() throws IOException {
+    void start() {
         listening = true;
         disconnected = false;
         try {
@@ -48,8 +49,7 @@ public class ServerClientHandler {
             }
             disconnect();
         } catch (ClassNotFoundException e) {
-            logger.severe("Class not found");
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Class not found");
         }
     }
 
@@ -82,7 +82,6 @@ public class ServerClientHandler {
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
-                disconnect();
             } else {
                 packetListener.accept(packet);
             }
@@ -93,6 +92,11 @@ public class ServerClientHandler {
         if (!disconnected) {
             logger.warning("Disconnected: " + reason.name());
             disconnectListener.accept(reason);
+            disconnect();
         }
+    }
+
+    public String getIp() {
+        return socket.getInetAddress().getHostAddress();
     }
 }

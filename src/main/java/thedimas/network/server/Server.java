@@ -2,6 +2,7 @@ package thedimas.network.server;
 
 import thedimas.network.enums.DcReason;
 import thedimas.network.packet.DisconnectPacket;
+import thedimas.network.packet.Packet;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -9,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
@@ -40,30 +42,29 @@ public class Server {
                 listeners.forEach(l -> l.connected(clientHandler));
                 logger.info("New connection from " + ip);
                 new Thread(() -> {
-                    try {
-                        clientHandler.received(packet -> {
-                            logger.info("Packet received " + packet.getClass().getSimpleName());
-                            listeners.forEach(l -> l.received(clientHandler, packet));
-                        });
-                        clientHandler.disconnected(reason ->
-                                listeners.forEach(l -> l.disconnected(clientHandler, reason))
-                        );
-                        clientHandler.start();
-                    } catch (IOException e) {
-                        logger.severe("Failed to listen client " + ip);
-                        e.printStackTrace();
-                        clientHandler.disconnect();
-                    }
+                    clientHandler.received(packet -> {
+                        logger.info("Packet received " + packet.getClass().getSimpleName());
+                        listeners.forEach(l -> l.received(clientHandler, packet));
+                    });
+                    clientHandler.disconnected(reason ->
+                            listeners.forEach(l -> l.disconnected(clientHandler, reason))
+                    );
+                    clientHandler.start();
                 }).start();
             }
         } catch (SocketException e) {
-            logger.warning("Socket closed");
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Socket closed", e);
         }
     }
 
-    public void addListener(ServerListener listener) {
-        listeners.add(listener);
+    public void send(Packet packet) {
+        clients.forEach(c -> {
+            try {
+                c.send(packet);
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Unable to send packet to " + c.getIp(), e);
+            }
+        });
     }
 
     public void stop() throws IOException {
@@ -79,5 +80,9 @@ public class Server {
         });
         serverSocket.close();
         listeners.forEach(ServerListener::stopped);
+    }
+
+    public void addListener(ServerListener listener) {
+        listeners.add(listener);
     }
 }
