@@ -33,6 +33,7 @@ public class TestClient {
             }
         });
 //        client.disconnect();
-        while (true) {}
+        while (true) {
+        }
     }
 }

@@ -5,15 +5,18 @@ import thedimas.network.enums.DcReason;
 import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 import java.net.Socket;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
+@Getter
 public class ServerClientHandler {
-    @Getter
     private final Socket socket;
     private Consumer<Packet> packetListener = (packet) -> {
     };
