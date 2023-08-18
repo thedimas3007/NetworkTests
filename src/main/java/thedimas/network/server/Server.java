@@ -30,7 +30,7 @@ public class Server {
         logger.info("Starting...");
         listening = true;
         serverSocket = new ServerSocket(port);
-        logger.fine("Started");
+        logger.config("Started");
         listeners.forEach(ServerListener::started);
         try {
             while (listening) {

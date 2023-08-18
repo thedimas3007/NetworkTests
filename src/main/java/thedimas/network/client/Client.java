@@ -34,7 +34,7 @@ public class Client {
     public void connect() throws IOException {
         logger.info("Connecting...");
         socket = new Socket(ip, port);
-        logger.fine("Connected");
+        logger.config("Connected");
 
         listening = true;
         disconnected = false;

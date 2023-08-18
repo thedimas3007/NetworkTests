@@ -1,5 +1,7 @@
 package thedimas.network;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Formatter;
@@ -9,11 +11,16 @@ import java.util.logging.LogRecord;
 
 public class LogFormatter extends Formatter {
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yy HH:mm:ss");
+    private String getStackTrace(Throwable e){
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString().trim();
+    }
+
 
     @Override
     public String format(LogRecord record) {
         StringBuilder formattedLog = new StringBuilder();
-
         formattedLog
                 .append(AnsiCodes.BOLD)
                 .append(AnsiCodes.DIM)
@@ -32,7 +39,7 @@ public class LogFormatter extends Formatter {
         } else if (record.getLevel().intValue() >= Level.CONFIG.intValue()) {
             logLevelColor = AnsiCodes.BRIGHT_GREEN;
         } else {
-            logLevelColor = AnsiCodes.GREEN;
+            logLevelColor = AnsiCodes.DIM;
         }
 
         formattedLog.append(logLevelColor)
@@ -50,8 +57,14 @@ public class LogFormatter extends Formatter {
                 .append(AnsiCodes.RESET)
                 .append("] ");
 
-        formattedLog.append(record.getMessage())
-                .append("\n");
+        formattedLog.append(record.getMessage());
+
+        if (record.getThrown() != null) {
+            formattedLog.append(": ")
+                    .append(getStackTrace(record.getThrown()));
+        }
+
+        formattedLog.append("\n");
 
         return formattedLog.toString();
     }

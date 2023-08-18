@@ -17,27 +17,27 @@ public class TestServer {
         server.addListener(new ServerListener() {
             @Override
             public void started() {
-                logger.fine("Server started");
+                logger.config("Server started");
             }
 
             @Override
             public void connected(ServerClientHandler client) {
-                logger.fine("New connection");
+                logger.config("New connection");
             }
 
             @Override
             public void received(ServerClientHandler client, Packet packet) {
-                logger.fine("New packet");
+                logger.config("New packet");
             }
 
             @Override
             public void disconnected(ServerClientHandler client, DcReason reason) {
-                logger.fine("New disconnection");
+                logger.config("New disconnection");
             }
 
             @Override
             public void stopped() {
-                logger.fine("Server stopped");
+                logger.config("Server stopped");
             }
         });
         new Thread(() -> {
