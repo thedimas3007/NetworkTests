@@ -5,13 +5,17 @@ import thedimas.network.packet.Packet;
 import thedimas.network.server.Server;
 import thedimas.network.server.ServerClientHandler;
 import thedimas.network.server.ServerListener;
+import thedimas.network.util.Bytes;
 
 import java.io.IOException;
-import java.util.Scanner;
+import java.util.*;
+import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
 public class TestServer {
+    private static final String password = "somepasswd";
+    private static final Map<ServerClientHandler, byte[]> salts = new HashMap<>();
     public static void main(String[] args) throws IOException {
         Server server = new Server(9999);
         server.addListener(new ServerListener() {
@@ -23,11 +27,31 @@ public class TestServer {
             @Override
             public void connected(ServerClientHandler client) {
                 logger.config("New connection");
+                try {
+                    byte[] salt = new byte[8];
+                    new Random().nextBytes(salt);
+                    client.send(new SaltPacket(salt));
+                    salts.put(client, salt);
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Unable to send salt to client", e);
+                }
             }
 
             @Override
             public void received(ServerClientHandler client, Packet packet) {
                 logger.config("New packet");
+                try {
+                    if (packet instanceof AuthPacket authPacket) {
+                        byte[] target = Bytes.hashed(Bytes.combine(salts.get(client), password.getBytes()));
+                        if (!Arrays.equals(target, authPacket.password)) {
+                            client.disconnect(DcReason.ACCESS_DENIED);
+                        } else {
+                            client.send(new AuthSuccessfulPacket());
+                        }
+                    }
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Unable to send AuthSuccessful packet to the client", e);
+                }
             }
 
             @Override

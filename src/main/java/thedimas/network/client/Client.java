@@ -59,7 +59,7 @@ public class Client {
         }
     }
 
-    public void send(Packet packet) throws IOException {
+    public <T extends Packet> void send(T packet) throws IOException {
         out.writeObject(packet);
     }
 

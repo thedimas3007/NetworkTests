@@ -3,7 +3,7 @@ package thedimas.network.enums;
 @SuppressWarnings("unused")
 public enum DcReason {
     /**
-     * When the client forcefully closes connection.
+     * When the client or server forcefully closes connection.
      */
     CONNECTION_CLOSED,
 
@@ -21,6 +21,6 @@ public enum DcReason {
      * Usually is only sent to listeners
      */
     STREAM_CORRUPTED,
-    TIMEOUT,
-    PACKET_SPAM // TODO: implement spam detection
+    ACCESS_DENIED,
+    TIMEOUT
 }

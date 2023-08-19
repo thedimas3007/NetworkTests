@@ -1,7 +1,6 @@
 package thedimas.network.server;
 
 import thedimas.network.enums.DcReason;
-import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
 
 import java.io.IOException;
@@ -39,8 +38,9 @@ public class Server {
                 String ip = clientSocket.getInetAddress().getHostAddress();
                 listeners.forEach(ServerListener::stopped);
                 clients.add(clientHandler);
-                listeners.forEach(l -> l.connected(clientHandler));
                 logger.info("New connection from " + ip);
+                clientHandler.init();
+                listeners.forEach(l -> l.connected(clientHandler));
                 new Thread(() -> {
                     clientHandler.received(packet -> {
                         logger.info("Packet received " + packet.getClass().getSimpleName());
@@ -49,7 +49,7 @@ public class Server {
                     clientHandler.disconnected(reason ->
                             listeners.forEach(l -> l.disconnected(clientHandler, reason))
                     );
-                    clientHandler.start();
+                    clientHandler.listen();
                 }).start();
             }
         } catch (SocketException e) {
@@ -69,15 +69,7 @@ public class Server {
 
     public void stop() throws IOException {
         listening = false;
-        clients.forEach(client -> {
-            try {
-                client.send(new DisconnectPacket(DcReason.SERVER_CLOSED));
-                client.disconnect();
-            } catch (IOException e) {
-                logger.severe("Failed to close client " + client.getSocket().getInetAddress().getHostAddress());
-                throw new RuntimeException(e);
-            }
-        });
+        clients.forEach(client -> client.disconnect(DcReason.SERVER_CLOSED));
         serverSocket.close();
         listeners.forEach(ServerListener::stopped);
     }

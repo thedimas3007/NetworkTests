@@ -32,12 +32,26 @@ public class ServerClientHandler {
         this.socket = socket;
     }
 
-    void start() {
-        listening = true;
-        disconnected = false;
+    void init() {
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
+        } catch (IOException e) {
+            if (e instanceof ObjectStreamException) {
+                logger.warning("Corrupted stream");
+                handleDisconnect(DcReason.STREAM_CORRUPTED);
+            } else {
+                logger.warning("Connection closed");
+                handleDisconnect(DcReason.CONNECTION_CLOSED);
+            }
+            close();
+        }
+    }
+
+    void listen() {
+        listening = true;
+        disconnected = false;
+        try {
             while (listening) {
                 Object receivedObject = in.readObject();
                 handlePacket(receivedObject);
@@ -50,17 +64,26 @@ public class ServerClientHandler {
                 logger.warning("Connection closed");
                 handleDisconnect(DcReason.CONNECTION_CLOSED);
             }
-            disconnect();
+            close();
         } catch (ClassNotFoundException e) {
             logger.log(Level.SEVERE, "Class not found");
         }
     }
 
-    public void send(Packet packet) throws IOException {
+    public <T extends Packet> void send(T packet) throws IOException {
         out.writeObject(packet);
     }
 
-    public void disconnect() {
+    public void disconnect(DcReason reason) {
+        try {
+            send(new DisconnectPacket(reason));
+            close();
+        } catch (IOException e) {
+            logger.severe("Error while disconnecting client " + socket.getInetAddress().getHostAddress());
+        }
+    }
+
+    public void close() {
         try {
             listening = false;
             disconnected = true;
@@ -68,7 +91,7 @@ public class ServerClientHandler {
             if (out != null) out.close();
             socket.close();
         } catch (IOException e) {
-            logger.severe("Error while disconnecting client " + socket.getInetAddress().getHostAddress());
+            logger.severe("Error while closing connection " + socket.getInetAddress().getHostAddress());
         }
     }
 
@@ -95,7 +118,7 @@ public class ServerClientHandler {
         if (!disconnected) {
             logger.warning("Disconnected: " + reason.name());
             disconnectListener.accept(reason);
-            disconnect();
+            close();
         }
     }
 
