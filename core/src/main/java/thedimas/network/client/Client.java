@@ -15,6 +15,10 @@ import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
+/**
+ * The Client class represents a client-side socket connection and provides methods for connecting,
+ * sending packets, receiving packets, and handling disconnections.
+ */
 @SuppressWarnings("unused")
 public class Client {
     private final List<ClientListener> listeners = new ArrayList<>();
@@ -31,6 +35,11 @@ public class Client {
         this.port = port;
     }
 
+    /**
+     * Connects the client to the specified IP address and port.
+     *
+     * @throws IOException if there is an error during connection
+     */
     public void connect() throws IOException {
         logger.info("Connecting...");
         socket = new Socket(ip, port);
@@ -59,10 +68,19 @@ public class Client {
         }
     }
 
+    /**
+     * Sends a packet to the connected server.
+     *
+     * @param packet the packet to be sent
+     * @throws IOException if there is an error while sending the packet
+     */
     public <T extends Packet> void send(T packet) throws IOException {
         out.writeObject(packet);
     }
 
+    /**
+     * Disconnects the client from the server and closes the socket.
+     */
     public void disconnect() {
         try {
             listening = false;
@@ -75,6 +93,11 @@ public class Client {
         }
     }
 
+    /**
+     * Handles a received object from the server and forwards it to the appropriate listener.
+     *
+     * @param object the received object
+     */
     void handlePacket(Object object) {
         logger.config("New object: " + object.toString());
         if (object instanceof Packet packet) {
@@ -86,6 +109,11 @@ public class Client {
         }
     }
 
+    /**
+     * Handles a disconnect packet and triggers disconnection actions if necessary.
+     *
+     * @param reason the reason for disconnection
+     */
     private void handleDisconnect(DcReason reason) {
         if (!disconnected) {
             logger.warning("Disconnected: " + reason.name());
@@ -94,6 +122,11 @@ public class Client {
         }
     }
 
+    /**
+     * Adds a listener to receive events from the client.
+     *
+     * @param listener the listener to be added
+     */
     public void addListener(ClientListener listener) {
         listeners.add(listener);
     }
