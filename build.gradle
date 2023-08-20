@@ -1,6 +1,18 @@
 apply plugin: "java"
+apply plugin: "nebula-aggregate-javadocs"
 
-version '1.0'
+
+version "1.0"
+
+
+buildscript {
+    repositories { jcenter() }
+
+    dependencies {
+        classpath "com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+"
+    }
+}
+
 
 ext {
     mindustryVersion = 'v145'
