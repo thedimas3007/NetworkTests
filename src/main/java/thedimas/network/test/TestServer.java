@@ -1,7 +1,10 @@
 package thedimas.network.test;
 
 import thedimas.network.enums.DcReason;
+import thedimas.network.packet.AuthPacket;
+import thedimas.network.packet.AuthSuccessfulPacket;
 import thedimas.network.packet.Packet;
+import thedimas.network.packet.SaltPacket;
 import thedimas.network.server.Server;
 import thedimas.network.server.ServerClientHandler;
 import thedimas.network.server.ServerListener;
@@ -43,7 +46,7 @@ public class TestServer {
                 try {
                     if (packet instanceof AuthPacket authPacket) {
                         byte[] target = Bytes.hashed(Bytes.combine(salts.get(client), password.getBytes()));
-                        if (!Arrays.equals(target, authPacket.password)) {
+                        if (!Arrays.equals(target, authPacket.getPassword())) {
                             client.disconnect(DcReason.ACCESS_DENIED);
                         } else {
                             client.send(new AuthSuccessfulPacket());

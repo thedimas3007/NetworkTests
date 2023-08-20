@@ -3,7 +3,9 @@ package thedimas.network.test;
 import thedimas.network.client.Client;
 import thedimas.network.client.ClientListener;
 import thedimas.network.enums.DcReason;
+import thedimas.network.packet.AuthPacket;
 import thedimas.network.packet.Packet;
+import thedimas.network.packet.SaltPacket;
 import thedimas.network.util.Bytes;
 
 import java.io.IOException;

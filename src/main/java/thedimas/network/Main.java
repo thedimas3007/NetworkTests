@@ -40,7 +40,7 @@ public class Main {
             try {
                 client.connect();
             } catch (Throwable t) {
-                Main.logger.severe("Unable to connect");
+                logger.severe("Unable to connect");
                 throw new RuntimeException(t);
             }
         }).start();

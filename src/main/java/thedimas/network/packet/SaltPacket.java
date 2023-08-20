@@ -1,7 +1,6 @@
-package thedimas.network.test;
+package thedimas.network.packet;
 
 import lombok.*;
-import thedimas.network.packet.Packet;
 
 @Data
 @With
