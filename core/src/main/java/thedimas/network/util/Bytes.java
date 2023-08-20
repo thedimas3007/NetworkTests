@@ -10,7 +10,6 @@ import java.security.MessageDigest;
  * The Bytes class provides utility methods for working with byte arrays.
  */
 public class Bytes {
-
     /**
      * Hashes the input byte array using the SHA-256 algorithm.
      *

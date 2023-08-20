@@ -9,7 +9,6 @@ import thedimas.network.packet.Packet;
  */
 @SuppressWarnings("unused")
 public interface ServerListener {
-
     /**
      * Invoked when the server has started successfully.
      */

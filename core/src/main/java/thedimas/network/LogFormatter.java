@@ -11,7 +11,8 @@ import java.util.logging.LogRecord;
 
 public class LogFormatter extends Formatter {
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yy HH:mm:ss");
-    private String getStackTrace(Throwable e){
+
+    private String getStackTrace(Throwable e) {
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
         return sw.toString().trim();
