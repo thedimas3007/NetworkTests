@@ -1,6 +1,5 @@
 package thedimas.network.test;
 
-import arc.util.io.Writes;
 import mindustry.gen.Player;
 import thedimas.network.enums.DcReason;
 import thedimas.network.packet.*;

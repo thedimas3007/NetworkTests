@@ -5,7 +5,6 @@ import arc.util.io.Writes;
 import lombok.*;
 import mindustry.gen.EntityMapping;
 import mindustry.gen.Entityc;
-import mindustry.gen.Player;
 
 import java.io.*;
 
