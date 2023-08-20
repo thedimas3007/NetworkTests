@@ -1,5 +1,6 @@
 package thedimas.network;
 
+import arc.util.io.Writes;
 import thedimas.network.client.Client;
 import thedimas.network.server.Server;
 

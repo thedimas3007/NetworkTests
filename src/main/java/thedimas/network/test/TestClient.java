@@ -1,9 +1,12 @@
 package thedimas.network.test;
 
+import mindustry.gen.Entityc;
+import mindustry.gen.Player;
 import thedimas.network.client.Client;
 import thedimas.network.client.ClientListener;
 import thedimas.network.enums.DcReason;
 import thedimas.network.packet.AuthPacket;
+import thedimas.network.packet.MindustryEntityPacket;
 import thedimas.network.packet.Packet;
 import thedimas.network.packet.SaltPacket;
 import thedimas.network.util.Bytes;
@@ -28,6 +31,9 @@ public class TestClient {
                     if (packet instanceof SaltPacket saltPacket) {
                         byte[] password = Bytes.hashed(Bytes.combine(saltPacket.getSalt(), "somepasswd".getBytes()));
                         client.send(new AuthPacket(password));
+                    } else if (packet instanceof MindustryEntityPacket entityPacket) {
+                        Entityc entityc = entityPacket.read();
+                        logger.info(((Player) entityc).name());
                     }
                 } catch (IOException e) {
                     logger.log(Level.FINE, "Unable to send AuthPacket", e);

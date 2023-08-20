@@ -1,16 +1,15 @@
 package thedimas.network.test;
 
+import arc.util.io.Writes;
+import mindustry.gen.Player;
 import thedimas.network.enums.DcReason;
-import thedimas.network.packet.AuthPacket;
-import thedimas.network.packet.AuthSuccessfulPacket;
-import thedimas.network.packet.Packet;
-import thedimas.network.packet.SaltPacket;
+import thedimas.network.packet.*;
 import thedimas.network.server.Server;
 import thedimas.network.server.ServerClientHandler;
 import thedimas.network.server.ServerListener;
 import thedimas.network.util.Bytes;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -50,6 +49,11 @@ public class TestServer {
                             client.disconnect(DcReason.ACCESS_DENIED);
                         } else {
                             client.send(new AuthSuccessfulPacket());
+                            Player player = Player.create();
+                            player.name("aboba");
+                            MindustryEntityPacket entityPacket = new MindustryEntityPacket();
+                            entityPacket.write(player);
+                            client.send(entityPacket);
                         }
                     }
                 } catch (IOException e) {
