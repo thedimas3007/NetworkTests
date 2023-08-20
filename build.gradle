@@ -2,43 +2,37 @@ apply plugin: "java"
 
 version '1.0'
 
-sourceCompatibility = JavaVersion.VERSION_16
-
-compileJava.options.encoding = "UTF-8"
-compileTestJava.options.encoding = "UTF-8"
-
-repositories {
-    mavenCentral()
-    maven { url "https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository" }
-    maven { url "https://www.jitpack.io" }
-}
-
 ext {
     mindustryVersion = 'v145'
     lombokVersion = '1.18.26'
 }
 
-dependencies {
-    annotationProcessor "org.projectlombok:lombok:$lombokVersion"
-    compileOnly "org.projectlombok:lombok:$lombokVersion"
+subprojects {
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
 
-    compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
-    compileOnly "com.github.Anuken.Arc:arcnet:$mindustryVersion"
-    compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
-}
+    compileJava.options.encoding = "UTF-8"
+    compileTestJava.options.encoding = "UTF-8"
 
-jar {
-    manifest {
-        attributes["Main-Class"] = "thedimas.network.Main"
+    repositories {
+        mavenCentral()
+        maven { url "https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository" }
+        maven { url "https://www.jitpack.io" }
     }
 
-    archiveFileName = "${project.archivesBaseName}.jar"
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
+    jar {
+        manifest {
+            attributes["Main-Class"] = "thedimas.network.Main"
+        }
 
-    from(rootDir) {
-        include "plugin.json"
+        archiveFileName = "${project.archivesBaseName}.jar"
+        from {
+            configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+
+        from(rootDir) {
+            include "plugin.json"
+        }
     }
 }
 
