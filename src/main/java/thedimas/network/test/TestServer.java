@@ -33,7 +33,7 @@ public class TestServer {
                     client.send(new SaltPacket(salt));
                     salts.put(client, salt);
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Unable to send salt to client", e);
+                    logger.log(Level.FINE, "Unable to send salt to client", e);
                 }
             }
 
@@ -50,7 +50,7 @@ public class TestServer {
                         }
                     }
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Unable to send AuthSuccessful packet to the client", e);
+                    logger.log(Level.FINE, "Unable to send AuthSuccessful packet to the client", e);
                 }
             }
 

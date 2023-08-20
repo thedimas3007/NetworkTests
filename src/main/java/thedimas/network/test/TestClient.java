@@ -7,6 +7,7 @@ import thedimas.network.packet.Packet;
 import thedimas.network.util.Bytes;
 
 import java.io.IOException;
+import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
@@ -27,7 +28,7 @@ public class TestClient {
                         client.send(new AuthPacket(password));
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.log(Level.FINE, "Unable to send AuthPacket", e);
                 }
             }
 

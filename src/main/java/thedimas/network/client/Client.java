@@ -71,7 +71,7 @@ public class Client {
             if (out != null) out.close();
             socket.close();
         } catch (IOException e) {
-            logger.severe("Error while disconnecting client " + socket.getInetAddress().getHostAddress());
+            logger.log(Level.FINE, "Error while disconnecting client " + socket.getInetAddress().getHostAddress(), e);
         }
     }
 

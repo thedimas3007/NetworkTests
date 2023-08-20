@@ -79,7 +79,7 @@ public class ServerClientHandler {
             send(new DisconnectPacket(reason));
             close();
         } catch (IOException e) {
-            logger.severe("Error while disconnecting client " + socket.getInetAddress().getHostAddress());
+            logger.log(Level.FINE, "Error while disconnecting client " + socket.getInetAddress().getHostAddress(), e);
         }
     }
 
@@ -91,7 +91,7 @@ public class ServerClientHandler {
             if (out != null) out.close();
             socket.close();
         } catch (IOException e) {
-            logger.severe("Error while closing connection " + socket.getInetAddress().getHostAddress());
+            logger.log(Level.FINE, "Error while closing connection " + socket.getInetAddress().getHostAddress(), e);
         }
     }
 
