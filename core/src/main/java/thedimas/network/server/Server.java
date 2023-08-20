@@ -13,6 +13,10 @@ import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
+/**
+ * The Server class represents a server that listens for incoming client connections, manages connected clients,
+ * and facilitates communication between the clients and the server.
+ */
 @SuppressWarnings("unused")
 public class Server {
     private final List<ServerClientHandler> clients = new ArrayList<>();
@@ -25,6 +29,12 @@ public class Server {
         this.port = port;
     }
 
+    /**
+     * Starts the server by initializing the server socket, accepting client connections,
+     * and managing communication with connected clients.
+     *
+     * @throws IOException if there is an error while starting the server
+     */
     public void start() throws IOException {
         logger.info("Starting...");
         listening = true;
@@ -57,6 +67,11 @@ public class Server {
         }
     }
 
+    /**
+     * Sends a packet to all connected clients.
+     *
+     * @param packet the packet to be sent
+     */
     public void send(Packet packet) {
         clients.forEach(c -> {
             try {
@@ -67,6 +82,11 @@ public class Server {
         });
     }
 
+    /**
+     * Stops the server by disconnecting all connected clients and closing the server socket.
+     *
+     * @throws IOException if there is an error while stopping the server
+     */
     public void stop() throws IOException {
         listening = false;
         clients.forEach(client -> client.disconnect(DcReason.SERVER_CLOSED));
@@ -74,6 +94,11 @@ public class Server {
         listeners.forEach(ServerListener::stopped);
     }
 
+    /**
+     * Adds a listener to receive events from the server.
+     *
+     * @param listener the listener to be added
+     */
     public void addListener(ServerListener listener) {
         listeners.add(listener);
     }

@@ -4,7 +4,8 @@ import lombok.*;
 import thedimas.network.enums.DcReason;
 
 /**
- * Called when the client wants to gracefully disconnect from the server or server is being closed.
+ * The DisconnectPacket class represents a packet that is sent when the client wants to gracefully disconnect from the server
+ * or when the server is being closed. It contains the reason for the disconnection.
  */
 @Data
 @With
@@ -12,5 +13,9 @@ import thedimas.network.enums.DcReason;
 @NoArgsConstructor
 @Builder
 public class DisconnectPacket implements Packet {
+    /**
+     * The reason for the disconnection event.
+     */
     DcReason reason;
 }
+
