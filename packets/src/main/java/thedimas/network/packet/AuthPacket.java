@@ -11,7 +11,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AuthPacket implements Packet, Serializable {
+public class AuthPacket implements Packet {
     /**
      * The password byte array for authentication.
      */
