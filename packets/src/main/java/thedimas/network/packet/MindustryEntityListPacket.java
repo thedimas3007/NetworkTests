@@ -20,7 +20,7 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class MindustryEntityListPacket implements Packet {
     /**
-     * The serialized list of byte arrays representing the list of Mindustry game entities.
+     * The list of byte arrays representing the list of serialized Mindustry game entities.
      */
     List<byte[]> serializedList = new ArrayList<>();
 
