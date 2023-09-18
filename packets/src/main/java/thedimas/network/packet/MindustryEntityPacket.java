@@ -14,7 +14,7 @@ import thedimas.network.util.Entities;
 @NoArgsConstructor
 @Builder
 @SuppressWarnings("unused")
-public class MindustryEntityPacket implements Packet {
+public class MindustryEntityPacket extends Packet {
     /**
      * The serialized byte array representing the Mindustry game entity.
      */

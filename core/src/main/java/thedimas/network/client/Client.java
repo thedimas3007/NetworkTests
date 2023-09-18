@@ -41,6 +41,8 @@ public class Client {
 
     /**
      * Connects the client to the specified IP address and port.
+     * <br/>
+     * This method is blocking.
      *
      * @throws IOException if there is an error during connection
      */
@@ -138,11 +140,17 @@ public class Client {
         listeners.add(listener);
     }
 
+    /**
+     * Registers an event listener for packets of a specific type.
+     *
+     * @param <T>      The type of packet to listen for, represented by a class.
+     * @param packet   The class representing the type of packet to listen for.
+     * @param consumer The consumer function to execute when a packet of the specified type is received.
+     */
     public <T extends Packet> void on(Class<T> packet, Consumer<T> consumer) {
         if (!packetListeners.containsKey(packet)) {
             packetListeners.put(packet, new ArrayList<>());
         }
-        packetListeners.get(packet)
-                .add((Consumer<Packet>) consumer);
+        packetListeners.get(packet).add((Consumer<Packet>) consumer);
     }
 }

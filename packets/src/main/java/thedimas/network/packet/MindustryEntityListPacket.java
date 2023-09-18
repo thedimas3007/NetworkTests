@@ -18,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @SuppressWarnings("unused")
-public class MindustryEntityListPacket implements Packet {
+public class MindustryEntityListPacket extends Packet {
     /**
      * The list of byte arrays representing the list of serialized Mindustry game entities.
      */

@@ -7,6 +7,6 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class JsCallPacket implements Packet {
+public class JsCallPacket extends Packet {
     String jsCode;
 }

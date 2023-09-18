@@ -8,7 +8,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
@@ -21,6 +24,7 @@ import static thedimas.network.Main.logger;
 public class Server {
     private final List<ServerClientHandler> clients = new ArrayList<>();
     private final List<ServerListener> listeners = new ArrayList<>();
+    private final Map<Class<?>, List<BiConsumer<ServerClientHandler, Packet>>> packetListeners = new HashMap<>();
     private final int port;
     private ServerSocket serverSocket;
     private boolean listening;
@@ -32,6 +36,8 @@ public class Server {
     /**
      * Starts the server by initializing the server socket, accepting client connections,
      * and managing communication with connected clients.
+     * <br/>
+     * This method is blocking.
      *
      * @throws IOException if there is an error while starting the server
      */
@@ -55,6 +61,10 @@ public class Server {
                     clientHandler.received(packet -> {
                         logger.info("Packet received " + packet.getClass().getSimpleName());
                         listeners.forEach(l -> l.received(clientHandler, packet));
+                        if (packetListeners.containsKey(packet.getClass())) {
+                            packetListeners.get(packet.getClass()).forEach(l -> l.accept(clientHandler, packet));
+                        }
+
                     });
                     clientHandler.disconnected(reason ->
                             listeners.forEach(l -> l.disconnected(clientHandler, reason))
@@ -101,5 +111,19 @@ public class Server {
      */
     public void addListener(ServerListener listener) {
         listeners.add(listener);
+    }
+
+    /**
+     * Registers an event listener for packets of a specific type.
+     *
+     * @param <T>      The type of packet to listen for, represented by a class.
+     * @param packet   The class representing the type of packet to listen for.
+     * @param consumer The consumer function to execute when a packet of the specified type is received.
+     */
+    public <T extends Packet> void on(Class<T> packet, BiConsumer<ServerClientHandler, T> consumer) {
+        if (!packetListeners.containsKey(packet)) {
+            packetListeners.put(packet, new ArrayList<>());
+        }
+        packetListeners.get(packet).add((BiConsumer<ServerClientHandler, Packet>) consumer);
     }
 }

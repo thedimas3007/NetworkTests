@@ -48,7 +48,6 @@ public class TestClient {
         });
 
         client.on(SaltPacket.class, salt -> {
-            salt.getId
             StringBuilder builder = new StringBuilder();
             for (byte b : salt.getSalt()) {
                 builder.append(String.format("%02x", b));

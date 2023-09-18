@@ -11,7 +11,7 @@ import thedimas.network.enums.ServerAction;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ServerActionPacket implements Packet {
+public class ServerActionPacket extends Packet {
     /**
      * The server action to be performed.
      */

@@ -70,6 +70,10 @@ public class TestServer {
                 logger.config("Server stopped");
             }
         });
+        server.on(AuthPacket.class, (serverClientHandler, authPacket) -> {
+            logger.info("Auth received: " + Arrays.toString(authPacket.getPassword()));
+        });
+
         new Thread(() -> {
             try {
                 server.start();
@@ -77,6 +81,7 @@ public class TestServer {
                 throw new RuntimeException(e);
             }
         }).start();
+
         Scanner scanner = new Scanner(System.in);
         while (true) {
             if (scanner.hasNext() && scanner.next().equals("exit")) {
