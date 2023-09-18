@@ -47,13 +47,3 @@ subprojects {
         }
     }
 }
-
-task testServer(type: JavaExec) {
-    main = 'thedimas.network.test.TestServer'
-    classpath sourceSets.main.runtimeClasspath
-}
-
-task testClient(type: JavaExec) {
-    main = 'thedimas.network.test.TestClient'
-    classpath sourceSets.main.runtimeClasspath
-}

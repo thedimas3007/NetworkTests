@@ -10,7 +10,10 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
@@ -22,6 +25,7 @@ import static thedimas.network.Main.logger;
 @SuppressWarnings("unused")
 public class Client {
     private final List<ClientListener> listeners = new ArrayList<>();
+    private final Map<Class<?>, List<Consumer<Packet>>> packetListeners = new HashMap<>();
     private final String ip;
     private final int port;
     private Socket socket;
@@ -105,6 +109,9 @@ public class Client {
                 handleDisconnect(disconnectPacket.getReason());
             } else {
                 listeners.forEach(l -> l.received(packet));
+                if (packetListeners.containsKey(packet.getClass())) {
+                    packetListeners.get(packet.getClass()).forEach(l -> l.accept(packet));
+                }
             }
         }
     }
@@ -129,5 +136,13 @@ public class Client {
      */
     public void addListener(ClientListener listener) {
         listeners.add(listener);
+    }
+
+    public <T extends Packet> void on(Class<T> packet, Consumer<T> consumer) {
+        if (!packetListeners.containsKey(packet)) {
+            packetListeners.put(packet, new ArrayList<>());
+        }
+        packetListeners.get(packet)
+                .add((Consumer<Packet>) consumer);
     }
 }

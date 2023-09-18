@@ -12,6 +12,7 @@ import thedimas.network.packet.SaltPacket;
 import thedimas.network.util.Bytes;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
@@ -44,6 +45,15 @@ public class TestClient {
             public void disconnected(DcReason reason) {
 
             }
+        });
+
+        client.on(SaltPacket.class, salt -> {
+            salt.getId
+            StringBuilder builder = new StringBuilder();
+            for (byte b : salt.getSalt()) {
+                builder.append(String.format("%02x", b));
+            }
+            logger.info("New salt: " + builder);
         });
         client.connect();
 //        client.disconnect();
