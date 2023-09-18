@@ -19,9 +19,9 @@ import static thedimas.network.Main.logger;
  * The ServerClientHandler class represents a handler for an individual client connected to the server.
  * It manages communication with the client, sending and receiving packets, and handling disconnection events.
  */
+@Getter
 @SuppressWarnings("unused")
 public class ServerClientHandler {
-    @Getter
     private final Socket socket;
     private Consumer<Packet> packetListener = (packet) -> {
     };

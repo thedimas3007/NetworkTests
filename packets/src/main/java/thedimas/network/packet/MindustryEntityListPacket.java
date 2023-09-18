@@ -40,9 +40,7 @@ public class MindustryEntityListPacket extends Packet {
      * @param entities the List of the entities to be written
      */
     public void write(List<Entityc> entities) {
-        entities.forEach(entity -> {
-            serializedList.add(Entities.write(entity));
-        });
+        entities.forEach(entity -> serializedList.add(Entities.write(entity)));
     }
 
     /**
@@ -51,21 +49,17 @@ public class MindustryEntityListPacket extends Packet {
      * @param entityGroup the group of entities to be written
      */
     public void write(EntityGroup<Entityc> entityGroup) {
-        entityGroup.each(entity -> {
-            serializedList.add(Entities.write(entity));
-        });
+        entityGroup.each(entity -> serializedList.add(Entities.write(entity)));
     }
 
     /**
      * Reads a serialized list of Mindustry entities from the packet.
-
+     *
      * @return the read List of Mindustry entities
      */
     public List<Entityc> read() {
         List<Entityc> entities = new ArrayList<>();
-        serializedList.forEach(serialized -> {
-            entities.add(Entities.read(serialized));
-        });
+        serializedList.forEach(serialized -> entities.add(Entities.read(serialized)));
         return entities;
     }
 }

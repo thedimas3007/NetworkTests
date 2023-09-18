@@ -12,7 +12,6 @@ import thedimas.network.packet.SaltPacket;
 import thedimas.network.util.Bytes;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;

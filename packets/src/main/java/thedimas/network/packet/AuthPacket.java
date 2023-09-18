@@ -1,7 +1,6 @@
 package thedimas.network.packet;
 
 import lombok.*;
-import java.io.Serializable;
 
 /**
  * The AuthPacket class represents a packet containing authentication information.
