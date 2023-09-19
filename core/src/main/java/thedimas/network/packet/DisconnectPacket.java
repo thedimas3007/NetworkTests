@@ -12,7 +12,7 @@ import thedimas.network.enums.DcReason;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class DisconnectPacket extends Packet {
+public class DisconnectPacket implements Packet {
     /**
      * The reason for the disconnection event.
      */

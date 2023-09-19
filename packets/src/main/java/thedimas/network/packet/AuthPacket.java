@@ -10,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AuthPacket extends Packet {
+public class AuthPacket implements Packet {
     /**
      * The password byte array for authentication.
      */

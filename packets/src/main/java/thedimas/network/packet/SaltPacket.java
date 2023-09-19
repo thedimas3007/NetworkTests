@@ -10,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SaltPacket extends Packet {
+public class SaltPacket implements Packet {
     /**
      * The salt byte array for secure communication.
      */
