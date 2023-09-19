@@ -151,9 +151,9 @@ public class Client {
     /**
      * Registers an event listener for packets of a specific type.
      *
-     * @param <T>      The type of packet to listen for, represented by a class.
-     * @param packet   The class representing the type of packet to listen for.
-     * @param consumer The consumer function to execute when a packet of the specified type is received.
+     * @param <T>      the type of packet to listen for, represented by a class.
+     * @param packet   the class representing the type of packet to listen for.
+     * @param consumer the consumer function to execute when a packet of the specified type is received.
      */
     public <T extends Packet> void on(Class<T> packet, Consumer<T> consumer) {
         if (!packetListeners.containsKey(packet)) {
@@ -162,6 +162,14 @@ public class Client {
         packetListeners.get(packet).add((Consumer<Packet>) consumer);
     }
 
+    /**
+     * Sends a request packet to a remote entity and registers a listener for the response.
+     *
+     * @param packet   the request packet to send.
+     * @param listener a consumer that will be called when a response is received.
+     * @param <T>      the type of response payload expected by the listener.
+     * @throws IOException if there is an error while sending the packet.
+     */
     public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
         RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
         requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);

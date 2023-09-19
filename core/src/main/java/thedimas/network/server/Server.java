@@ -116,9 +116,9 @@ public class Server {
     /**
      * Registers an event listener for packets of a specific type.
      *
-     * @param <T>      The type of packet to listen for, represented by a class.
-     * @param packet   The class representing the type of packet to listen for.
-     * @param consumer The consumer function to execute when a packet of the specified type is received.
+     * @param <T>      the type of packet to listen for, represented by a class.
+     * @param packet   the class representing the type of packet to listen for.
+     * @param consumer the consumer function to execute when a packet of the specified type is received.
      */
     public <T extends Packet> void on(Class<T> packet, BiConsumer<ServerClientHandler, T> consumer) {
         if (!packetListeners.containsKey(packet)) {

@@ -22,11 +22,8 @@ import static thedimas.network.Main.logger;
 @SuppressWarnings("unused")
 public class ServerClientHandler {
     private final Socket socket;
-    private Consumer<Packet> packetListener = (packet) -> {
-    };
-
-    private Consumer<DcReason> disconnectListener = (reason -> {
-    });
+    private Consumer<Packet> packetListener = packet -> {};
+    private Consumer<DcReason> disconnectListener = reason -> {};
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private boolean listening;
@@ -155,6 +152,14 @@ public class ServerClientHandler {
         }
     }
 
+    /**
+     * Sends a response packet for a given request packet containing a response payload of a specified serializable type.
+     *
+     * @param requestPacket the request packet to which this response corresponds.
+     * @param resp          the response payload to send.
+     * @param <T>           the type of the response payload, which must implement {@link Serializable}.
+     * @throws IOException if there is an error while sending the packet.
+     */
     public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
         send(new ResponsePacket<>(requestPacket.getId(), resp));
     }
