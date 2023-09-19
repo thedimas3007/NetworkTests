@@ -71,8 +71,17 @@ public class TestServer {
                 logger.config("Server stopped");
             }
         });
+
         server.on(AuthPacket.class, (serverClientHandler, authPacket) -> {
             logger.info("Auth received: " + Arrays.toString(authPacket.getPassword()));
+        });
+
+        server.on(RequestPacket.class, (serverClientHandler, requestPacket) -> {
+            try {
+                serverClientHandler.response(requestPacket, "Hi!");
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Holy hell...", e);
+            }
         });
 
         new Thread(() -> {

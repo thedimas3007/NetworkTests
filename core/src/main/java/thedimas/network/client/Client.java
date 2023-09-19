@@ -3,6 +3,8 @@ package thedimas.network.client;
 import thedimas.network.enums.DcReason;
 import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
+import thedimas.network.packet.RequestPacket;
+import thedimas.network.packet.ResponsePacket;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -26,6 +28,7 @@ import static thedimas.network.Main.logger;
 public class Client {
     private final List<ClientListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<Consumer<Packet>>> packetListeners = new HashMap<>();
+    private final Map<Integer, Consumer<Object>> requestListeners = new HashMap<>();
     private final String ip;
     private final int port;
     private Socket socket;
@@ -110,6 +113,11 @@ public class Client {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
             } else {
+                if (packet instanceof ResponsePacket<?> responsePacket) {
+                    if (requestListeners.containsKey(responsePacket.getTarget())) {
+                        requestListeners.get(responsePacket.getTarget()).accept(responsePacket.getResponse());
+                    }
+                }
                 listeners.forEach(l -> l.received(packet));
                 if (packetListeners.containsKey(packet.getClass())) {
                     packetListeners.get(packet.getClass()).forEach(l -> l.accept(packet));
@@ -152,5 +160,11 @@ public class Client {
             packetListeners.put(packet, new ArrayList<>());
         }
         packetListeners.get(packet).add((Consumer<Packet>) consumer);
+    }
+
+    public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
+        RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
+        requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
+        send(requestPacket);
     }
 }

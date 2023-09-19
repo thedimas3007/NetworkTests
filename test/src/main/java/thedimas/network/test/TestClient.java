@@ -5,10 +5,7 @@ import mindustry.gen.Player;
 import thedimas.network.client.Client;
 import thedimas.network.client.ClientListener;
 import thedimas.network.enums.DcReason;
-import thedimas.network.packet.AuthPacket;
-import thedimas.network.packet.MindustryEntityPacket;
-import thedimas.network.packet.Packet;
-import thedimas.network.packet.SaltPacket;
+import thedimas.network.packet.*;
 import thedimas.network.util.Bytes;
 
 import java.io.IOException;
@@ -52,7 +49,16 @@ public class TestClient {
                 builder.append(String.format("%02x", b));
             }
             logger.info("New salt: " + builder);
+
+            try {
+                client.<String>request(new ObjectPacket<>("Hello world"), s -> {
+                    logger.info("Aaaaa: "+ s);
+                });
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Holy hell...", e);
+            }
         });
+
         client.connect();
 //        client.disconnect();
         while (true) {

@@ -4,11 +4,10 @@ import lombok.Getter;
 import thedimas.network.enums.DcReason;
 import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
+import thedimas.network.packet.RequestPacket;
+import thedimas.network.packet.ResponsePacket;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamException;
+import java.io.*;
 import java.net.Socket;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -154,6 +153,10 @@ public class ServerClientHandler {
                 packetListener.accept(packet);
             }
         }
+    }
+
+    public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
+        send(new ResponsePacket<>(requestPacket.getId(), resp));
     }
 
     /**
