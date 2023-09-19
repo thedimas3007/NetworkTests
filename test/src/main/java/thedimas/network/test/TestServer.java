@@ -6,6 +6,7 @@ import thedimas.network.packet.*;
 import thedimas.network.server.Server;
 import thedimas.network.server.ServerClientHandler;
 import thedimas.network.server.ServerListener;
+import thedimas.network.server.events.ServerStartedEvent;
 import thedimas.network.util.Bytes;
 
 import java.io.IOException;
@@ -72,16 +73,20 @@ public class TestServer {
             }
         });
 
-        server.on(AuthPacket.class, (serverClientHandler, authPacket) -> {
+        server.onPacket(AuthPacket.class, (serverClientHandler, authPacket) -> {
             logger.info("Auth received: " + Arrays.toString(authPacket.getPassword()));
         });
 
-        server.on(RequestPacket.class, (serverClientHandler, requestPacket) -> {
+        server.onPacket(RequestPacket.class, (serverClientHandler, requestPacket) -> {
             try {
                 serverClientHandler.response(requestPacket, "Hi!");
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Holy hell...", e);
             }
+        });
+
+        server.onEvent(ServerStartedEvent.class, serverStartedEvent -> {
+            logger.info("sasdfasdfasdfsdf");
         });
 
         new Thread(() -> {
