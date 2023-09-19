@@ -112,7 +112,7 @@ public class Server {
         try {
             client.send(packet);
         } catch (IOException e) {
-            logger.log(Level.FINE, "Unable to send packet to " + c.getIp(), e);
+            logger.log(Level.FINE, "Unable to send packet to " + client.getIp(), e);
         }
     }
 
