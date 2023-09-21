@@ -20,10 +20,6 @@ import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
-/**
- * The Server class represents a server that listens for incoming client connections, manages connected clients,
- * and facilitates communication between the clients and the server.
- */
 @SuppressWarnings("unused")
 public class Server {
     private final List<ServerClientHandler> clients = new ArrayList<>();
@@ -38,14 +34,6 @@ public class Server {
         this.port = port;
     }
 
-    /**
-     * Starts the server by initializing the server socket, accepting client connections,
-     * and managing communication with connected clients.
-     * <br/>
-     * This method is blocking.
-     *
-     * @throws IOException if there is an error while starting the server
-     */
     public void start() throws IOException {
         logger.info("Starting...");
         listening = true;
@@ -87,11 +75,6 @@ public class Server {
         }
     }
 
-    /**
-     * Sends a packet to all connected clients.
-     *
-     * @param packet the packet to be sent
-     */
     public void send(Packet packet) {
         clients.forEach(c -> {
             try {
@@ -102,12 +85,6 @@ public class Server {
         });
     }
 
-    /**
-     * Sends a packet to the specified clients.
-     *
-     * @param client the target client to receive a packet
-     * @param packet the packet to be sent
-     */
     public void send(ServerClientHandler client, Packet packet) {
         try {
             client.send(packet);
@@ -116,12 +93,6 @@ public class Server {
         }
     }
 
-
-    /**
-     * Stops the server by disconnecting all connected clients and closing the server socket.
-     *
-     * @throws IOException if there is an error while stopping the server
-     */
     public void stop() throws IOException {
         listening = false;
         clients.forEach(client -> client.disconnect(DcReason.SERVER_CLOSED));
@@ -130,22 +101,10 @@ public class Server {
         listeners.forEach(ServerListener::stopped);
     }
 
-    /**
-     * Adds a listener to receive events from the server.
-     *
-     * @param listener the listener to be added
-     */
     public void addListener(ServerListener listener) {
         listeners.add(listener);
     }
 
-    /**
-     * Registers a listener for packets of a specific type.
-     *
-     * @param <T>      the type of packet to listen for, represented by a class.
-     * @param packet   the class representing the type of packet to listen for.
-     * @param consumer the consumer function to execute when a packet of the specified type is received.
-     */
     public <T extends Packet> void onPacket(Class<T> packet, BiConsumer<ServerClientHandler, T> consumer) {
         if (!packetListeners.containsKey(packet)) {
             packetListeners.put(packet, new ArrayList<>());
@@ -153,13 +112,6 @@ public class Server {
         packetListeners.get(packet).add((BiConsumer<ServerClientHandler, Packet>) consumer);
     }
 
-    /**
-     * Registers a listener for events of a specific type.
-     *
-     * @param <T>      the type of event to listen for, represented by a class.
-     * @param event    the class representing the type of event to listen for.
-     * @param consumer the consumer function to execute when an event of the specified type is fired.
-     */
     public <T extends Event> void onEvent(Class<T> event, Consumer<T> consumer) {
         events.on(event, consumer);
     }

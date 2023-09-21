@@ -14,10 +14,6 @@ import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
-/**
- * The ServerClientHandler class represents a handler for an individual client connected to the server.
- * It manages communication with the client, sending and receiving packets, and handling disconnection events.
- */
 @Getter
 @SuppressWarnings("unused")
 public class ServerClientHandler {
@@ -33,10 +29,6 @@ public class ServerClientHandler {
         this.socket = socket;
     }
 
-    /**
-     * Initializes the handler by setting up input and output streams for communication with the client.
-     * Handles potential errors and disconnection events.
-     */
     void init() {
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -53,12 +45,6 @@ public class ServerClientHandler {
         }
     }
 
-    /**
-     * Starts listening for incoming packets from the client and handles them appropriately.
-     * Handles potential errors and disconnection events.
-     * <br/>
-     * This method is blocking.
-     */
     void listen() {
         listening = true;
         disconnected = false;
@@ -81,21 +67,10 @@ public class ServerClientHandler {
         }
     }
 
-    /**
-     * Sends a packet to the connected client.
-     *
-     * @param packet the packet to be sent
-     * @throws IOException if there is an error while sending the packet
-     */
     public <T extends Packet> void send(T packet) throws IOException {
         out.writeObject(packet);
     }
 
-    /**
-     * Disconnects the client with the specified reason and sends a disconnect packet.
-     *
-     * @param reason the reason for the disconnection
-     */
     public void disconnect(DcReason reason) {
         try {
             send(new DisconnectPacket(reason));
@@ -105,9 +80,6 @@ public class ServerClientHandler {
         }
     }
 
-    /**
-     * Closes the communication streams and socket, disconnecting the client.
-     */
     public void close() {
         try {
             listening = false;
@@ -120,29 +92,14 @@ public class ServerClientHandler {
         }
     }
 
-    /**
-     * Sets a consumer to handle received packets from the client.
-     *
-     * @param consumer the consumer to handle received packets
-     */
     void received(Consumer<Packet> consumer) { // TODO: List of consumers
         packetListener = consumer;
     }
 
-    /**
-     * Sets a consumer to handle disconnection events from the client.
-     *
-     * @param consumer the consumer to handle disconnection events
-     */
     void disconnected(Consumer<DcReason> consumer) {
         disconnectListener = consumer;
     }
 
-    /**
-     * Handles a received object from the client and forwards it to the appropriate listener.
-     *
-     * @param object the received object
-     */
     void handlePacket(Object object) {
         logger.config("New object: " + object.toString());
         if (object instanceof Packet packet) {
@@ -154,23 +111,10 @@ public class ServerClientHandler {
         }
     }
 
-    /**
-     * Sends a response packet for a given request packet containing a response payload of a specified serializable type.
-     *
-     * @param requestPacket the request packet to which this response corresponds.
-     * @param resp          the response payload to send.
-     * @param <T>           the type of the response payload, which must implement {@link Serializable}.
-     * @throws IOException if there is an error while sending the packet.
-     */
     public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
         send(new ResponsePacket<>(requestPacket.getId(), resp));
     }
 
-    /**
-     * Handles a disconnect packet and triggers disconnection actions if necessary.
-     *
-     * @param reason the reason for disconnection
-     */
     private void handleDisconnect(DcReason reason) {
         if (!disconnected) {
             logger.warning("Disconnected: " + reason.name());
@@ -179,11 +123,6 @@ public class ServerClientHandler {
         }
     }
 
-    /**
-     * Returns the IP address of the connected client.
-     *
-     * @return the IP address of the client
-     */
     public String getIp() {
         return socket.getInetAddress().getHostAddress();
     }
