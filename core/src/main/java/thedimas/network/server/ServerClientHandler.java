@@ -56,6 +56,8 @@ public class ServerClientHandler {
     /**
      * Starts listening for incoming packets from the client and handles them appropriately.
      * Handles potential errors and disconnection events.
+     * <br/>
+     * This method is blocking.
      */
     void listen() {
         listening = true;

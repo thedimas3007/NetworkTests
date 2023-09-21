@@ -58,7 +58,7 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
                 String ip = clientSocket.getInetAddress().getHostAddress();
-                events.fire(new ServerConnectionEvent(clientHandler));
+                events.fire(new ServerClientConnectedEvent(clientHandler));
                 listeners.forEach(ServerListener::stopped);
                 clients.add(clientHandler);
                 logger.info("New connection from " + ip);
@@ -76,7 +76,7 @@ public class Server {
 
                     });
                     clientHandler.disconnected(reason -> {
-                        events.fire(new ServerDisconnectionEvent(clientHandler, reason));
+                        events.fire(new ServerClientDisconnectedEvent(clientHandler, reason));
                         listeners.forEach(l -> l.disconnected(clientHandler, reason));
                     });
                     clientHandler.listen();
