@@ -6,6 +6,7 @@ import thedimas.network.packet.*;
 import thedimas.network.server.Server;
 import thedimas.network.server.ServerClientHandler;
 import thedimas.network.server.ServerListener;
+import thedimas.network.server.events.ServerClientConnectedEvent;
 import thedimas.network.server.events.ServerStartedEvent;
 import thedimas.network.util.Bytes;
 

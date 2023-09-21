@@ -1,6 +1,9 @@
 package thedimas.network.client;
 
+import thedimas.network.client.events.ClientConnectedEvent;
+import thedimas.network.client.events.ClientDisconnectedEvent;
 import thedimas.network.enums.DcReason;
+import thedimas.network.event.EventListener;
 import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
 import thedimas.network.packet.RequestPacket;
@@ -29,6 +32,7 @@ public class Client {
     private final List<ClientListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<Consumer<Packet>>> packetListeners = new HashMap<>();
     private final Map<Integer, Consumer<Object>> requestListeners = new HashMap<>();
+    private final EventListener events = new EventListener();
     private final String ip;
     private final int port;
     private Socket socket;
@@ -59,6 +63,8 @@ public class Client {
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
+            events.fire(new ClientConnectedEvent());
+            listeners.forEach(ClientListener::connected);
             while (listening) {
                 Object receivedObject = in.readObject();
                 handlePacket(receivedObject);
@@ -134,6 +140,7 @@ public class Client {
     private void handleDisconnect(DcReason reason) {
         if (!disconnected) {
             logger.warning("Disconnected: " + reason.name());
+            events.fire(new ClientDisconnectedEvent(reason));
             listeners.forEach(l -> l.disconnected(reason));
             disconnect();
         }
