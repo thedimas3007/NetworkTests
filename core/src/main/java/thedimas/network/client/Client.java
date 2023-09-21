@@ -95,14 +95,15 @@ public class Client {
                 handleDisconnect(disconnectPacket.getReason());
             } else {
                 if (packet instanceof ResponsePacket<?> responsePacket) {
-                    if (requestListeners.containsKey(responsePacket.getTarget())) {
-                        requestListeners.get(responsePacket.getTarget()).accept(responsePacket.getResponse());
-                    }
+                    requestListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
+                        listener.accept(responsePacket.getResponse());
+                        return listener;
+                    });
                 }
+
                 listeners.forEach(l -> l.received(packet));
-                if (packetListeners.containsKey(packet.getClass())) {
-                    packetListeners.get(packet.getClass()).forEach(l -> l.accept(packet));
-                }
+                packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())
+                        .forEach(l -> l.accept(packet));
             }
         }
     }
@@ -121,10 +122,8 @@ public class Client {
     }
 
     public <T extends Packet> void on(Class<T> packet, Consumer<T> consumer) {
-        if (!packetListeners.containsKey(packet)) {
-            packetListeners.put(packet, new ArrayList<>());
-        }
-        packetListeners.get(packet).add((Consumer<Packet>) consumer);
+        packetListeners.computeIfAbsent(packet, k -> new ArrayList<>())
+                .add((Consumer<Packet>) consumer);
     }
 
     public <T> void request(Packet packet, Consumer<T> listener) throws IOException {

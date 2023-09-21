@@ -22,13 +22,15 @@ import static thedimas.network.Main.logger;
 
 @SuppressWarnings("unused")
 public class Server {
-    private final List<ServerClientHandler> clients = new ArrayList<>();
+    // region variables
     private final List<ServerListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<BiConsumer<ServerClientHandler, Packet>>> packetListeners = new HashMap<>();
     private final EventListener events = new EventListener();
-    private final int port;
     private ServerSocket serverSocket;
+    private final List<ServerClientHandler> clients = new ArrayList<>();
+    private final int port;
     private boolean listening;
+    //endregion
 
     public Server(int port) {
         this.port = port;
@@ -58,10 +60,8 @@ public class Server {
                         logger.info("Packet received " + packet.getClass().getSimpleName());
                         events.fire(new ServerReceivedEvent(clientHandler, packet));
                         listeners.forEach(l -> l.received(clientHandler, packet));
-                        if (packetListeners.containsKey(packet.getClass())) {
-                            packetListeners.get(packet.getClass()).forEach(l -> l.accept(clientHandler, packet));
-                        }
-
+                        packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())
+                                .forEach(l -> l.accept(clientHandler, packet));
                     });
                     clientHandler.disconnected(reason -> {
                         events.fire(new ServerClientDisconnectedEvent(clientHandler, reason));
@@ -73,6 +73,16 @@ public class Server {
         } catch (SocketException e) {
             logger.log(Level.SEVERE, "Socket closed", e);
         }
+    }
+
+    public void stop() throws IOException {
+        listening = false;
+
+        clients.forEach(client -> client.disconnect(DcReason.SERVER_CLOSED));
+        serverSocket.close();
+
+        events.fire(new ServerStoppedEvent());
+        listeners.forEach(ServerListener::stopped);
     }
 
     public void send(Packet packet) {
@@ -93,23 +103,13 @@ public class Server {
         }
     }
 
-    public void stop() throws IOException {
-        listening = false;
-        clients.forEach(client -> client.disconnect(DcReason.SERVER_CLOSED));
-        serverSocket.close();
-        events.fire(new ServerStoppedEvent());
-        listeners.forEach(ServerListener::stopped);
-    }
-
     public void addListener(ServerListener listener) {
         listeners.add(listener);
     }
 
     public <T extends Packet> void onPacket(Class<T> packet, BiConsumer<ServerClientHandler, T> consumer) {
-        if (!packetListeners.containsKey(packet)) {
-            packetListeners.put(packet, new ArrayList<>());
-        }
-        packetListeners.get(packet).add((BiConsumer<ServerClientHandler, Packet>) consumer);
+        packetListeners.computeIfAbsent(packet, k -> new ArrayList<>())
+                .add((BiConsumer<ServerClientHandler, Packet>) consumer);
     }
 
     public <T extends Event> void onEvent(Class<T> event, Consumer<T> consumer) {
