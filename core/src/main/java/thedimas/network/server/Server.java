@@ -26,16 +26,22 @@ public class Server {
     private final List<ServerListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<BiConsumer<ServerClientHandler, Packet>>> packetListeners = new HashMap<>();
     private final EventListener events = new EventListener();
-    private ServerSocket serverSocket;
-    private final List<ServerClientHandler> clients = new ArrayList<>();
-    private final int port;
-    private boolean listening;
-    //endregion
 
+    private final List<ServerClientHandler> clients = new ArrayList<>();
+    private ServerSocket serverSocket;
+
+    private final int port;
+
+    private boolean listening;
+    // endregion
+
+    // region constructor
     public Server(int port) {
         this.port = port;
     }
+    // endregion
 
+    // region networking
     public void start() throws IOException {
         logger.info("Starting...");
         listening = true;
@@ -102,7 +108,9 @@ public class Server {
             logger.log(Level.FINE, "Unable to send packet to " + client.getIp(), e);
         }
     }
+    // endregion
 
+    // region listeners
     public void addListener(ServerListener listener) {
         listeners.add(listener);
     }
@@ -115,4 +123,5 @@ public class Server {
     public <T extends Event> void onEvent(Class<T> event, Consumer<T> consumer) {
         events.on(event, consumer);
     }
+    // endregion
 }

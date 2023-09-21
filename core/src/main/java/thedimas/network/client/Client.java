@@ -25,23 +25,31 @@ import static thedimas.network.Main.logger;
 
 @SuppressWarnings("unused")
 public class Client {
+    // region variables
     private final List<ClientListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<Consumer<Packet>>> packetListeners = new HashMap<>();
     private final Map<Integer, Consumer<Object>> requestListeners = new HashMap<>();
     private final EventListener events = new EventListener();
-    private final String ip;
-    private final int port;
+
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+
+    private final String ip;
+    private final int port;
+
     private boolean listening;
     private boolean disconnected;
+    // endregion
 
+    // region constructor
     public Client(String ip, int port) {
         this.ip = ip;
         this.port = port;
     }
+    // endregion
 
+    // region networking
     public void connect() throws IOException {
         logger.info("Connecting...");
         socket = new Socket(ip, port);
@@ -72,10 +80,6 @@ public class Client {
         }
     }
 
-    public <T extends Packet> void send(T packet) throws IOException {
-        out.writeObject(packet);
-    }
-
     public void disconnect() {
         try {
             listening = false;
@@ -88,7 +92,30 @@ public class Client {
         }
     }
 
-    void handlePacket(Object object) {
+    public <T extends Packet> void send(T packet) throws IOException {
+        out.writeObject(packet);
+    }
+
+    public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
+        RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
+        requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
+        send(requestPacket);
+    }
+    // endregion
+
+    // region listeners
+    public void addListener(ClientListener listener) {
+        listeners.add(listener);
+    }
+
+    public <T extends Packet> void on(Class<T> packet, Consumer<T> consumer) {
+        packetListeners.computeIfAbsent(packet, k -> new ArrayList<>())
+                .add((Consumer<Packet>) consumer);
+    }
+    // endregion
+
+    // region private handlers
+    private void handlePacket(Object object) {
         logger.config("New object: " + object.toString());
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
@@ -116,19 +143,5 @@ public class Client {
             disconnect();
         }
     }
-
-    public void addListener(ClientListener listener) {
-        listeners.add(listener);
-    }
-
-    public <T extends Packet> void on(Class<T> packet, Consumer<T> consumer) {
-        packetListeners.computeIfAbsent(packet, k -> new ArrayList<>())
-                .add((Consumer<Packet>) consumer);
-    }
-
-    public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
-        RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
-        requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
-        send(requestPacket);
-    }
+    // endregion
 }

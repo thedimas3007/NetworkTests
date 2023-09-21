@@ -17,18 +17,25 @@ import static thedimas.network.Main.logger;
 @Getter
 @SuppressWarnings("unused")
 public class ServerClientHandler {
-    private final Socket socket;
+    // region variables
     private Consumer<Packet> packetListener = packet -> {};
     private Consumer<DcReason> disconnectListener = reason -> {};
+
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private final Socket socket;
+
     private boolean listening;
     private boolean disconnected;
+    // endregion
 
+    // region constructor
     ServerClientHandler(Socket socket) {
         this.socket = socket;
     }
+    // endregion
 
+    // region initialization
     void init() {
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -66,7 +73,9 @@ public class ServerClientHandler {
             logger.log(Level.SEVERE, "Class not found");
         }
     }
+    // endregion
 
+    // region networking
     public <T extends Packet> void send(T packet) throws IOException {
         out.writeObject(packet);
     }
@@ -80,7 +89,7 @@ public class ServerClientHandler {
         }
     }
 
-    public void close() {
+    private void close() {
         try {
             listening = false;
             disconnected = true;
@@ -92,6 +101,12 @@ public class ServerClientHandler {
         }
     }
 
+    public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
+        send(new ResponsePacket<>(requestPacket.getId(), resp));
+    }
+    // endregion
+
+    // region listening
     void received(Consumer<Packet> consumer) { // TODO: List of consumers
         packetListener = consumer;
     }
@@ -111,10 +126,6 @@ public class ServerClientHandler {
         }
     }
 
-    public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
-        send(new ResponsePacket<>(requestPacket.getId(), resp));
-    }
-
     private void handleDisconnect(DcReason reason) {
         if (!disconnected) {
             logger.warning("Disconnected: " + reason.name());
@@ -122,8 +133,11 @@ public class ServerClientHandler {
             close();
         }
     }
+    // endregion
 
+    // region etc
     public String getIp() {
         return socket.getInetAddress().getHostAddress();
     }
+    // endregion
 }
