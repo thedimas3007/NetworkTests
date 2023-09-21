@@ -20,7 +20,7 @@ import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "unchecked"})
 public class Server {
     // region variables
     private final List<ServerListener> listeners = new ArrayList<>();
