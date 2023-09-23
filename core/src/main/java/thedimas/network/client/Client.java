@@ -2,6 +2,7 @@ package thedimas.network.client;
 
 import thedimas.network.client.events.ClientConnectedEvent;
 import thedimas.network.client.events.ClientDisconnectedEvent;
+import thedimas.network.client.events.ClientReceivedEvent;
 import thedimas.network.enums.DcReason;
 import thedimas.network.event.EventListener;
 import thedimas.network.packet.DisconnectPacket;
@@ -9,10 +10,7 @@ import thedimas.network.packet.Packet;
 import thedimas.network.packet.RequestPacket;
 import thedimas.network.packet.ResponsePacket;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamException;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,11 +55,14 @@ public class Client {
 
         listening = true;
         disconnected = false;
+
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
+
             events.fire(new ClientConnectedEvent());
             listeners.forEach(ClientListener::connected);
+
             while (listening) {
                 Object receivedObject = in.readObject();
                 handlePacket(receivedObject);
@@ -84,6 +85,7 @@ public class Client {
         try {
             listening = false;
             disconnected = true;
+
             if (in != null) in.close();
             if (out != null) out.close();
             socket.close();
@@ -101,6 +103,10 @@ public class Client {
         requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
         send(requestPacket);
     }
+
+    public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
+        send(new ResponsePacket<>(requestPacket.getId(), resp));
+    }
     // endregion
 
     // region listeners
@@ -108,7 +114,7 @@ public class Client {
         listeners.add(listener);
     }
 
-    public <T extends Packet> void on(Class<T> packet, Consumer<T> consumer) {
+    public <T extends Packet> void onPacket(Class<T> packet, Consumer<T> consumer) {
         packetListeners.computeIfAbsent(packet, k -> new ArrayList<>())
                 .add((Consumer<Packet>) consumer);
     }
@@ -120,14 +126,13 @@ public class Client {
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
+            } else if (packet instanceof ResponsePacket<?> responsePacket) {
+                requestListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
+                    listener.accept(responsePacket.getResponse());
+                    return null;
+                });
             } else {
-                if (packet instanceof ResponsePacket<?> responsePacket) {
-                    requestListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
-                        listener.accept(responsePacket.getResponse());
-                        return listener;
-                    });
-                }
-
+                events.fire(new ClientReceivedEvent(packet));
                 listeners.forEach(l -> l.received(packet));
                 packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())
                         .forEach(l -> l.accept(packet));
@@ -138,8 +143,10 @@ public class Client {
     private void handleDisconnect(DcReason reason) {
         if (!disconnected) {
             logger.warning("Disconnected: " + reason.name());
+
             events.fire(new ClientDisconnectedEvent(reason));
             listeners.forEach(l -> l.disconnected(reason));
+
             disconnect();
         }
     }

@@ -44,37 +44,18 @@ public class Server {
     // region networking
     public void start() throws IOException {
         logger.info("Starting...");
-        listening = true;
         serverSocket = new ServerSocket(port);
         logger.config("Started");
+
+        listening = true;
+
         events.fire(new ServerStartedEvent());
         listeners.forEach(ServerListener::started);
-        try { // TODO: some sort of registerClient
+
+        try {
             while (listening) {
                 Socket clientSocket = serverSocket.accept();
-                ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
-                String ip = clientSocket.getInetAddress().getHostAddress();
-                events.fire(new ServerClientConnectedEvent(clientHandler));
-                listeners.forEach(ServerListener::stopped);
-                clients.add(clientHandler);
-                logger.info("New connection from " + ip);
-                clientHandler.init();
-                listeners.forEach(l -> l.connected(clientHandler));
-
-                new Thread(() -> {
-                    clientHandler.received(packet -> {
-                        logger.info("Packet received " + packet.getClass().getSimpleName());
-                        events.fire(new ServerReceivedEvent(clientHandler, packet));
-                        listeners.forEach(l -> l.received(clientHandler, packet));
-                        packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())
-                                .forEach(l -> l.accept(clientHandler, packet));
-                    });
-                    clientHandler.disconnected(reason -> {
-                        events.fire(new ServerClientDisconnectedEvent(clientHandler, reason));
-                        listeners.forEach(l -> l.disconnected(clientHandler, reason));
-                    });
-                    clientHandler.listen();
-                }).start();
+                new Thread(() -> handleConnection(clientSocket)).start();
             }
         } catch (SocketException e) {
             logger.log(Level.SEVERE, "Socket closed", e);
@@ -108,6 +89,24 @@ public class Server {
             logger.log(Level.FINE, "Unable to send packet to " + client.getIp(), e);
         }
     }
+
+    public <T> void request(Packet packet, Consumer<T> listener) {
+        clients.forEach(c -> {
+            try {
+                c.request(packet, listener);
+            } catch (IOException e) {
+                logger.log(Level.FINE, "Unable to send request to " + c.getIp(), e);
+            }
+        });
+    }
+
+    public <T> void request(ServerClientHandler client, Packet packet, Consumer<T> listener) {
+        try {
+            client.request(packet, listener);
+        } catch (IOException e) {
+            logger.log(Level.FINE, "Unable to send request to " + client.getIp(), e);
+        }
+    }
     // endregion
 
     // region listeners
@@ -122,6 +121,35 @@ public class Server {
 
     public <T extends Event> void onEvent(Class<T> event, Consumer<T> consumer) {
         events.on(event, consumer);
+    }
+    // endregion
+
+    // region private handlers
+    private void handleConnection(Socket clientSocket) {
+        ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
+
+        clients.add(clientHandler);
+        clientHandler.init();
+
+        logger.info("New connection from " + clientHandler.getIp());
+        events.fire(new ServerClientConnectedEvent(clientHandler));
+        listeners.forEach(l -> l.connected(clientHandler));
+
+
+        clientHandler.received(packet -> {
+            logger.info("Packet received " + packet.getClass().getSimpleName());
+            events.fire(new ServerReceivedEvent(clientHandler, packet));
+            listeners.forEach(l -> l.received(clientHandler, packet));
+            packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())
+                    .forEach(l -> l.accept(clientHandler, packet));
+        });
+
+        clientHandler.disconnected(reason -> {
+            events.fire(new ServerClientDisconnectedEvent(clientHandler, reason));
+            listeners.forEach(l -> l.disconnected(clientHandler, reason));
+        });
+
+        clientHandler.listen();
     }
     // endregion
 }

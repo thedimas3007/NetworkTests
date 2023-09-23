@@ -76,6 +76,7 @@ public class TestServer {
 
         server.onPacket(AuthPacket.class, (serverClientHandler, authPacket) -> {
             logger.info("Auth received: " + Arrays.toString(authPacket.getPassword()));
+            server.<String>request(new ObjectPacket<>("aboba test"), s -> logger.info("Obobo: " + s));
         });
 
         server.onPacket(RequestPacket.class, (serverClientHandler, requestPacket) -> {

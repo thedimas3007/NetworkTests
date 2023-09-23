@@ -43,7 +43,7 @@ public class TestClient {
             }
         });
 
-        client.on(SaltPacket.class, salt -> {
+        client.onPacket(SaltPacket.class, salt -> {
             StringBuilder builder = new StringBuilder();
             for (byte b : salt.getSalt()) {
                 builder.append(String.format("%02x", b));
@@ -51,9 +51,15 @@ public class TestClient {
             logger.info("New salt: " + builder);
 
             try {
-                client.<String>request(new ObjectPacket<>("Hello world"), s -> {
-                    logger.info("Aaaaa: "+ s);
-                });
+                client.<String>request(new ObjectPacket<>("Hello world"), s -> logger.info("Aaaaa: "+ s));
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Holy hell...", e);
+            }
+        });
+
+        client.onPacket(RequestPacket.class, request -> {
+            try {
+                client.response(request, "Tea");
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Holy hell...", e);
             }

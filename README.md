@@ -15,11 +15,15 @@ Output jar should be in `build/libs`.
 - [ ] Review, clean and improve code structure
 - [ ] Review JavaDoc
 - [ ] More useful methods
+- [ ] Timeout
+- [ ] Packet spam detection
 
 
 #### Server
-- [ ] Requests
+
+- [x] Requests
 
 #### Client
+
 - [ ] `EventListener` like in server
-- [ ] `response` for requests
+- [x] `response` for requests

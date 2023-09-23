@@ -9,17 +9,20 @@ import thedimas.network.packet.ResponsePacket;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
 
 @Getter
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "unchecked"})
 public class ServerClientHandler {
     // region variables
     private Consumer<Packet> packetListener = packet -> {};
     private Consumer<DcReason> disconnectListener = reason -> {};
+    private final Map<Integer, Consumer<Object>> requestListeners = new HashMap<>();
 
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -101,25 +104,38 @@ public class ServerClientHandler {
         }
     }
 
+    public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
+        RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
+        requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
+        send(requestPacket);
+    }
+
     public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
         send(new ResponsePacket<>(requestPacket.getId(), resp));
     }
     // endregion
 
     // region listening
-    void received(Consumer<Packet> consumer) { // TODO: List of consumers
+    void received(Consumer<Packet> consumer) {
         packetListener = consumer;
     }
 
     void disconnected(Consumer<DcReason> consumer) {
         disconnectListener = consumer;
     }
+    // endregion
 
-    void handlePacket(Object object) {
+    // region private handlers
+    private void handlePacket(Object object) {
         logger.config("New object: " + object.toString());
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
+            } else if (packet instanceof ResponsePacket<?> responsePacket) {
+                requestListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
+                    listener.accept(responsePacket.getResponse());
+                    return null;
+                });
             } else {
                 packetListener.accept(packet);
             }
