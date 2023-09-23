@@ -1,14 +1,8 @@
 package thedimas.network.test;
 
-import mindustry.gen.Player;
-import thedimas.network.enums.DcReason;
 import thedimas.network.packet.*;
 import thedimas.network.server.Server;
 import thedimas.network.server.ServerClientHandler;
-import thedimas.network.server.ServerListener;
-import thedimas.network.server.events.ServerClientConnectedEvent;
-import thedimas.network.server.events.ServerStartedEvent;
-import thedimas.network.util.Bytes;
 
 import java.io.IOException;
 import java.util.*;
@@ -22,73 +16,22 @@ public class TestServer {
 
     public static void main(String[] args) throws IOException {
         Server server = new Server(9999);
-        server.addListener(new ServerListener() {
-            @Override
-            public void started() {
-                logger.config("Server started");
-            }
 
-            @Override
-            public void connected(ServerClientHandler client) {
-                logger.config("New connection");
-                try {
-                    byte[] salt = new byte[8];
-                    new Random().nextBytes(salt);
-                    client.send(new SaltPacket(salt));
-                    salts.put(client, salt);
-                } catch (IOException e) {
-                    logger.log(Level.FINE, "Unable to send salt to client", e);
-                }
-            }
-
-            @Override
-            public void received(ServerClientHandler client, Packet packet) {
-                logger.config("New packet");
-                try {
-                    if (packet instanceof AuthPacket authPacket) {
-                        byte[] target = Bytes.hashed(Bytes.combine(salts.get(client), password.getBytes()));
-                        if (!Arrays.equals(target, authPacket.getPassword())) {
-                            client.disconnect(DcReason.ACCESS_DENIED);
-                        } else {
-                            client.send(new AuthSuccessfulPacket());
-                            Player player = Player.create();
-                            player.name("aboba");
-                            MindustryEntityPacket entityPacket = new MindustryEntityPacket();
-                            entityPacket.write(player);
-                            client.send(entityPacket);
-                        }
-                    }
-                } catch (IOException e) {
-                    logger.log(Level.FINE, "Unable to send AuthSuccessful packet to the client", e);
-                }
-            }
-
-            @Override
-            public void disconnected(ServerClientHandler client, DcReason reason) {
-                logger.config("New disconnection");
-            }
-
-            @Override
-            public void stopped() {
-                logger.config("Server stopped");
-            }
-        });
-
-        server.onPacket(AuthPacket.class, (serverClientHandler, authPacket) -> {
-            logger.info("Auth received: " + Arrays.toString(authPacket.getPassword()));
-            server.<String>request(new ObjectPacket<>("aboba test"), s -> logger.info("Obobo: " + s));
-        });
-
-        server.onPacket(RequestPacket.class, (serverClientHandler, requestPacket) -> {
+        server.onRequest(ObjectPacket.class, (serverClientHandler, id, objectPacket) -> {
+            logger.info(serverClientHandler.getIp() + ": " + objectPacket.toString());
             try {
-                serverClientHandler.response(requestPacket, "Hi!");
+                serverClientHandler.response(id, "Lol");
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Holy hell...", e);
+                logger.log(Level.WARNING, "no no no", e);
             }
         });
 
-        server.onEvent(ServerStartedEvent.class, serverStartedEvent -> {
-            logger.info("sasdfasdfasdfsdf");
+        server.onRequest(PingPacket.class, (serverClientHandler, id, pingPacket) -> {
+            try {
+                serverClientHandler.response(id, pingPacket.getCreated());
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "no no no", e);
+            }
         });
 
         new Thread(() -> {

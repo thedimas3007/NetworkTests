@@ -22,7 +22,7 @@ public class ServerClientHandler {
     // region variables
     private Consumer<Packet> packetListener = packet -> {};
     private Consumer<DcReason> disconnectListener = reason -> {};
-    private final Map<Integer, Consumer<Object>> requestListeners = new HashMap<>();
+    private final Map<Integer, Consumer<Object>> responseListeners = new HashMap<>();
 
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -106,12 +106,16 @@ public class ServerClientHandler {
 
     public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
         RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
-        requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
+        responseListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
         send(requestPacket);
     }
 
+    public <T extends Serializable> void response(int id, T resp) throws IOException {
+        send(new ResponsePacket<>(id, resp));
+    }
+
     public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
-        send(new ResponsePacket<>(requestPacket.getId(), resp));
+        response(requestPacket.getId(), resp);
     }
     // endregion
 
@@ -132,7 +136,7 @@ public class ServerClientHandler {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
             } else if (packet instanceof ResponsePacket<?> responsePacket) {
-                requestListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
+                responseListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
                     listener.accept(responsePacket.getResponse());
                     return null;
                 });

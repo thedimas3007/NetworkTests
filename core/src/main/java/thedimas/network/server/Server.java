@@ -3,7 +3,9 @@ package thedimas.network.server;
 import thedimas.network.enums.DcReason;
 import thedimas.network.event.Event;
 import thedimas.network.event.EventListener;
+import thedimas.network.func.TripleConsumer;
 import thedimas.network.packet.Packet;
+import thedimas.network.packet.RequestPacket;
 import thedimas.network.server.events.*;
 
 import java.io.IOException;
@@ -25,6 +27,7 @@ public class Server {
     // region variables
     private final List<ServerListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<BiConsumer<ServerClientHandler, Packet>>> packetListeners = new HashMap<>();
+    private final Map<Class<?>, List<TripleConsumer<ServerClientHandler, Integer, Packet>>> requestListeners = new HashMap<>();
     private final EventListener events = new EventListener();
 
     private final List<ServerClientHandler> clients = new ArrayList<>();
@@ -122,6 +125,11 @@ public class Server {
     public <T extends Event> void onEvent(Class<T> event, Consumer<T> consumer) {
         events.on(event, consumer);
     }
+
+    public <T extends Packet> void onRequest(Class<T> packetClass, TripleConsumer<ServerClientHandler, Integer, T> consumer) {
+        requestListeners.computeIfAbsent(packetClass, k -> new ArrayList<>())
+                .add((TripleConsumer<ServerClientHandler, Integer, Packet>) consumer);
+    }
     // endregion
 
     // region private handlers
@@ -142,6 +150,11 @@ public class Server {
             listeners.forEach(l -> l.received(clientHandler, packet));
             packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())
                     .forEach(l -> l.accept(clientHandler, packet));
+
+            if (packet instanceof RequestPacket<?> requestPacket) {
+                requestListeners.computeIfAbsent(requestPacket.getPacket().getClass(), k -> new ArrayList<>())
+                        .forEach(l -> l.accept(clientHandler, requestPacket.getId(), requestPacket.getPacket()));
+            }
         });
 
         clientHandler.disconnected(reason -> {

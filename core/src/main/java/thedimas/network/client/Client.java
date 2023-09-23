@@ -4,11 +4,14 @@ import thedimas.network.client.events.ClientConnectedEvent;
 import thedimas.network.client.events.ClientDisconnectedEvent;
 import thedimas.network.client.events.ClientReceivedEvent;
 import thedimas.network.enums.DcReason;
+import thedimas.network.event.Event;
 import thedimas.network.event.EventListener;
+import thedimas.network.func.TripleConsumer;
 import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
 import thedimas.network.packet.RequestPacket;
 import thedimas.network.packet.ResponsePacket;
+import thedimas.network.server.ServerClientHandler;
 
 import java.io.*;
 import java.net.Socket;
@@ -26,7 +29,8 @@ public class Client {
     // region variables
     private final List<ClientListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<Consumer<Packet>>> packetListeners = new HashMap<>();
-    private final Map<Integer, Consumer<Object>> requestListeners = new HashMap<>();
+    private final Map<Integer, Consumer<Object>> responseListeners = new HashMap<>(); // listeners for responses from server
+    private final Map<Class<?>, List<TripleConsumer<ServerClientHandler, Integer, Packet>>> requestListeners = new HashMap<>(); // listeners for server requests
     private final EventListener events = new EventListener();
 
     private Socket socket;
@@ -100,7 +104,7 @@ public class Client {
 
     public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
         RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
-        requestListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
+        responseListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
         send(requestPacket);
     }
 
@@ -118,6 +122,16 @@ public class Client {
         packetListeners.computeIfAbsent(packet, k -> new ArrayList<>())
                 .add((Consumer<Packet>) consumer);
     }
+
+    public <T extends Event> void onEvent(Class<T> event, Consumer<T> consumer) {
+        events.on(event, consumer);
+    }
+
+    public <T extends Packet> void onRequest(Class<T> packetClass, TripleConsumer<ServerClientHandler, Integer, T> consumer) {
+        requestListeners.computeIfAbsent(packetClass, k -> new ArrayList<>())
+                .add((TripleConsumer<ServerClientHandler, Integer, Packet>) consumer);
+    }
+
     // endregion
 
     // region private handlers
@@ -126,12 +140,14 @@ public class Client {
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
-            } else if (packet instanceof ResponsePacket<?> responsePacket) {
-                requestListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
-                    listener.accept(responsePacket.getResponse());
-                    return null;
-                });
             } else {
+                if (packet instanceof ResponsePacket<?> responsePacket) {
+                    responseListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
+                        listener.accept(responsePacket.getResponse());
+                        return null;
+                    });
+                }
+
                 events.fire(new ClientReceivedEvent(packet));
                 listeners.forEach(l -> l.received(packet));
                 packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())

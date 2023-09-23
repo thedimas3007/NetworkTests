@@ -17,6 +17,7 @@ Output jar should be in `build/libs`.
 - [ ] More useful methods
 - [ ] Timeout
 - [ ] Packet spam detection
+- [ ] Error event
 
 
 #### Server
@@ -25,5 +26,13 @@ Output jar should be in `build/libs`.
 
 #### Client
 
-- [ ] `EventListener` like in server
+- [x] `EventListener` like in server
 - [x] `response` for requests
+
+### Notes
+
+Don't confuse `requestListeners` and `responseListeners`. Here's the difference:
+
+- `requestListeners` Map is used to listen for incoming `RequestPacket`s on Server/Client
+- While `responseListeners` are those lambdas used to handle the received back response
+

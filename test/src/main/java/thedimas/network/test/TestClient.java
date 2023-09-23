@@ -1,14 +1,11 @@
 package thedimas.network.test;
 
-import mindustry.gen.Entityc;
-import mindustry.gen.Player;
 import thedimas.network.client.Client;
-import thedimas.network.client.ClientListener;
-import thedimas.network.enums.DcReason;
+import thedimas.network.client.events.ClientConnectedEvent;
 import thedimas.network.packet.*;
-import thedimas.network.util.Bytes;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
@@ -16,52 +13,19 @@ import static thedimas.network.Main.logger;
 public class TestClient {
     public static void main(String[] args) throws IOException {
         Client client = new Client("127.0.0.1", 9999);
-        client.addListener(new ClientListener() {
-            @Override
-            public void connected() {
 
-            }
-
-            @Override
-            public void received(Packet packet) {
-                try {
-                    if (packet instanceof SaltPacket saltPacket) {
-                        byte[] password = Bytes.hashed(Bytes.combine(saltPacket.getSalt(), "somepasswd".getBytes()));
-                        client.send(new AuthPacket(password));
-                    } else if (packet instanceof MindustryEntityPacket entityPacket) {
-                        Entityc entityc = entityPacket.read();
-                        logger.info(((Player) entityc).name());
-                    }
-                } catch (IOException e) {
-                    logger.log(Level.FINE, "Unable to send AuthPacket", e);
-                }
-            }
-
-            @Override
-            public void disconnected(DcReason reason) {
-
-            }
-        });
-
-        client.onPacket(SaltPacket.class, salt -> {
-            StringBuilder builder = new StringBuilder();
-            for (byte b : salt.getSalt()) {
-                builder.append(String.format("%02x", b));
-            }
-            logger.info("New salt: " + builder);
-
+        client.onEvent(ClientConnectedEvent.class, clientConnectedEvent -> {
             try {
-                client.<String>request(new ObjectPacket<>("Hello world"), s -> logger.info("Aaaaa: "+ s));
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Holy hell...", e);
-            }
-        });
+                client.<String>request(new ObjectPacket<>("some test"), s -> {
+                    logger.info("Resp: " + s);
+                });
 
-        client.onPacket(RequestPacket.class, request -> {
-            try {
-                client.response(request, "Tea");
+                client.<Long>request(new PingPacket(System.currentTimeMillis()), l -> {
+                    logger.info("Spent " + (System.currentTimeMillis() - l) / 2 + "ms");
+                });
+
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Holy hell...", e);
+                logger.log(Level.WARNING, "Holy hell", e);
             }
         });
 
