@@ -2,8 +2,6 @@ package thedimas.network.packet;
 
 import lombok.*;
 
-import java.time.Instant;
-
 @Data
 @With
 @AllArgsConstructor

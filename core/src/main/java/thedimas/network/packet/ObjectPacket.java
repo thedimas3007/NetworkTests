@@ -9,6 +9,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ObjectPacket <T extends Serializable> implements Packet {
+public class ObjectPacket<T extends Serializable> implements Packet {
     T payload;
 }

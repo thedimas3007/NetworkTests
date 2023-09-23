@@ -5,7 +5,6 @@ import thedimas.network.client.events.ClientConnectedEvent;
 import thedimas.network.packet.*;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.logging.Level;
 
 import static thedimas.network.Main.logger;
@@ -16,13 +15,9 @@ public class TestClient {
 
         client.onEvent(ClientConnectedEvent.class, clientConnectedEvent -> {
             try {
-                client.<String>request(new ObjectPacket<>("some test"), s -> {
-                    logger.info("Resp: " + s);
-                });
+                client.<String>request(new ObjectPacket<>("some test"), s -> logger.info("Resp: " + s));
 
-                client.<Long>request(new PingPacket(System.currentTimeMillis()), l -> {
-                    logger.info("Spent " + (System.currentTimeMillis() - l) / 2 + "ms");
-                });
+                client.<Long>request(new PingPacket(System.currentTimeMillis()), l -> logger.info("Spent " + (System.currentTimeMillis() - l) / 2 + "ms"));
 
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Holy hell", e);

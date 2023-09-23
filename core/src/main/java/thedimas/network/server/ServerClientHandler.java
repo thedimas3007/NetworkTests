@@ -20,8 +20,10 @@ import static thedimas.network.Main.logger;
 @SuppressWarnings({"unused", "unchecked"})
 public class ServerClientHandler {
     // region variables
-    private Consumer<Packet> packetListener = packet -> {};
-    private Consumer<DcReason> disconnectListener = reason -> {};
+    private Consumer<Packet> packetListener = packet -> {
+    };
+    private Consumer<DcReason> disconnectListener = reason -> {
+    };
     private final Map<Integer, Consumer<Object>> responseListeners = new HashMap<>();
 
     private ObjectOutputStream out;
