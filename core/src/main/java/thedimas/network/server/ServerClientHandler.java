@@ -137,12 +137,14 @@ public class ServerClientHandler {
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
-            } else if (packet instanceof ResponsePacket<?> responsePacket) {
-                responseListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
-                    listener.accept(responsePacket.getResponse());
-                    return null;
-                });
             } else {
+                if (packet instanceof ResponsePacket<?> responsePacket) {
+                    responseListeners.computeIfPresent(responsePacket.getTarget(), (key, listener) -> {
+                        listener.accept(responsePacket.getResponse());
+                        return null;
+                    });
+                }
+                
                 packetListener.accept(packet);
             }
         }

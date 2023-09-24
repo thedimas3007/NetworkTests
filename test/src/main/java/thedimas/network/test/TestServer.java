@@ -2,7 +2,6 @@ package thedimas.network.test;
 
 import thedimas.network.packet.*;
 import thedimas.network.server.Server;
-import thedimas.network.server.ServerClientHandler;
 
 import java.io.IOException;
 import java.util.*;
@@ -11,9 +10,6 @@ import java.util.logging.Level;
 import static thedimas.network.Main.logger;
 
 public class TestServer {
-    private static final String password = "somepasswd";
-    private static final Map<ServerClientHandler, byte[]> salts = new HashMap<>();
-
     public static void main(String[] args) throws IOException {
         Server server = new Server(9999);
 
