@@ -2,6 +2,7 @@ package thedimas.network.client;
 
 import thedimas.network.client.events.ClientConnectedEvent;
 import thedimas.network.client.events.ClientDisconnectedEvent;
+import thedimas.network.client.events.ClientErrorEvent;
 import thedimas.network.client.events.ClientReceivedEvent;
 import thedimas.network.enums.DcReason;
 import thedimas.network.event.Event;
@@ -20,9 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-
-import static thedimas.network.Main.logger;
 
 @SuppressWarnings({"unused", "unchecked"})
 public class Client {
@@ -53,10 +51,7 @@ public class Client {
 
     // region networking
     public void connect() throws IOException {
-        logger.info("Connecting...");
         socket = new Socket(ip, port);
-        logger.config("Connected");
-
         listening = true;
         disconnected = false;
 
@@ -73,15 +68,13 @@ public class Client {
             }
         } catch (IOException e) {
             if (e instanceof ObjectStreamException) {
-                logger.warning("Corrupted stream");
                 handleDisconnect(DcReason.STREAM_CORRUPTED);
             } else {
-                logger.warning("Connection closed");
                 handleDisconnect(DcReason.CONNECTION_CLOSED);
             }
             disconnect();
         } catch (ClassNotFoundException e) {
-            logger.log(Level.SEVERE, "Class not found");
+            events.fire(new ClientErrorEvent("Class not found", e));
         }
     }
 
@@ -94,21 +87,25 @@ public class Client {
             if (out != null) out.close();
             socket.close();
         } catch (IOException e) {
-            logger.log(Level.FINE, "Error while disconnecting client " + socket.getInetAddress().getHostAddress(), e);
+            events.fire(new ClientErrorEvent("Error while disconnecting client", e));
         }
     }
 
-    public <T extends Packet> void send(T packet) throws IOException {
-        out.writeObject(packet);
+    public <T extends Packet> void send(T packet) {
+        try {
+            out.writeObject(packet);
+        } catch (IOException e) {
+            events.fire(new ClientErrorEvent("Unable to send packet " + packet.toString(), e));
+        }
     }
 
-    public <T> void request(Packet packet, Consumer<T> listener) throws IOException {
+    public <T> void request(Packet packet, Consumer<T> listener) {
         RequestPacket<Packet> requestPacket = new RequestPacket<>((int) (Math.random() * Integer.MAX_VALUE), packet);
         responseListeners.put(requestPacket.getId(), (Consumer<Object>) listener);
         send(requestPacket);
     }
 
-    public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) throws IOException {
+    public <T extends Serializable> void response(RequestPacket<Packet> requestPacket, T resp) {
         send(new ResponsePacket<>(requestPacket.getId(), resp));
     }
     // endregion
@@ -136,7 +133,6 @@ public class Client {
 
     // region private handlers
     private void handlePacket(Object object) {
-        logger.config("New object: " + object.toString());
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
@@ -158,8 +154,6 @@ public class Client {
 
     private void handleDisconnect(DcReason reason) {
         if (!disconnected) {
-            logger.warning("Disconnected: " + reason.name());
-
             events.fire(new ClientDisconnectedEvent(reason));
             listeners.forEach(l -> l.disconnected(reason));
 
