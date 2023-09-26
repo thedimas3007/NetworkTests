@@ -14,19 +14,10 @@ public class TestClient {
         Client client = new Client("127.0.0.1", 9999);
 
         client.onEvent(ClientConnectedEvent.class, clientConnectedEvent -> {
-            try {
-                client.<String>request(new ObjectPacket<>("some test"), s -> logger.info("Resp: " + s));
-
-                client.<Long>request(new PingPacket(System.currentTimeMillis()), l -> logger.info("Spent " + (System.currentTimeMillis() - l) / 2 + "ms"));
-
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Holy hell", e);
-            }
+            client.<String>request(new ObjectPacket<>("some test"), s -> logger.info("Resp: " + s));
+            client.<Long>request(new PingPacket(System.currentTimeMillis()), l -> logger.info("Spent " + (System.currentTimeMillis() - l) / 2 + "ms"));
         });
 
         client.connect();
-//        client.disconnect();
-        while (true) {
-        }
     }
 }

@@ -6,6 +6,7 @@ public enum DcReason {
     DISCONNECTED,
     SERVER_CLOSED,
     STREAM_CORRUPTED,
+    CLASS_NOT_FOUND,
     ACCESS_DENIED,
     TIMEOUT
 }

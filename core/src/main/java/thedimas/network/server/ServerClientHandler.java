@@ -1,6 +1,7 @@
 package thedimas.network.server;
 
 import lombok.Getter;
+import org.jetbrains.annotations.Blocking;
 import thedimas.network.enums.DcReason;
 import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
@@ -13,8 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-
-import static thedimas.network.Main.logger;
 
 @Getter
 @SuppressWarnings({"unused", "unchecked"})
@@ -47,16 +46,15 @@ public class ServerClientHandler {
             in = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
             if (e instanceof ObjectStreamException) {
-                logger.warning("Corrupted stream");
                 handleDisconnect(DcReason.STREAM_CORRUPTED);
             } else {
-                logger.warning("Connection closed");
                 handleDisconnect(DcReason.CONNECTION_CLOSED);
             }
             close();
         }
     }
 
+    @Blocking
     void listen() {
         listening = true;
         disconnected = false;
@@ -67,15 +65,13 @@ public class ServerClientHandler {
             }
         } catch (IOException e) {
             if (e instanceof ObjectStreamException) {
-                logger.warning("Corrupted stream");
                 handleDisconnect(DcReason.STREAM_CORRUPTED);
             } else {
-                logger.warning("Connection closed");
                 handleDisconnect(DcReason.CONNECTION_CLOSED);
             }
             close();
         } catch (ClassNotFoundException e) {
-            logger.log(Level.SEVERE, "Class not found");
+            handleDisconnect(DcReason.CLASS_NOT_FOUND);
         }
     }
     // endregion
@@ -85,13 +81,9 @@ public class ServerClientHandler {
         out.writeObject(packet);
     }
 
-    public void disconnect(DcReason reason) {
-        try {
-            send(new DisconnectPacket(reason));
-            close();
-        } catch (IOException e) {
-            logger.log(Level.FINE, "Error while disconnecting client " + socket.getInetAddress().getHostAddress(), e);
-        }
+    public void disconnect(DcReason reason) throws IOException {
+        send(new DisconnectPacket(reason));
+        close();
     }
 
     private void close() {
@@ -101,8 +93,7 @@ public class ServerClientHandler {
             if (in != null) in.close();
             if (out != null) out.close();
             socket.close();
-        } catch (IOException e) {
-            logger.log(Level.FINE, "Error while closing connection " + socket.getInetAddress().getHostAddress(), e);
+        } catch (IOException ignored) {
         }
     }
 
@@ -133,7 +124,6 @@ public class ServerClientHandler {
 
     // region private handlers
     private void handlePacket(Object object) {
-        logger.config("New object: " + object.toString());
         if (object instanceof Packet packet) {
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
@@ -152,7 +142,6 @@ public class ServerClientHandler {
 
     private void handleDisconnect(DcReason reason) {
         if (!disconnected) {
-            logger.warning("Disconnected: " + reason.name());
             disconnectListener.accept(reason);
             close();
         }

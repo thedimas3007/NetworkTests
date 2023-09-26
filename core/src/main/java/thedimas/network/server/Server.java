@@ -1,5 +1,6 @@
 package thedimas.network.server;
 
+import org.jetbrains.annotations.Blocking;
 import thedimas.network.enums.DcReason;
 import thedimas.network.event.Event;
 import thedimas.network.event.EventListener;
@@ -20,7 +21,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
-import static thedimas.network.Main.logger;
 
 @SuppressWarnings({"unused", "unchecked"})
 public class Server {
@@ -45,10 +45,9 @@ public class Server {
     // endregion
 
     // region networking
+    @Blocking
     public void start() throws IOException {
-        logger.info("Starting...");
         serverSocket = new ServerSocket(port);
-        logger.config("Started");
 
         listening = true;
 
@@ -61,14 +60,21 @@ public class Server {
                 new Thread(() -> handleConnection(clientSocket)).start();
             }
         } catch (SocketException e) {
-            logger.log(Level.SEVERE, "Socket closed", e);
+            events.fire(new ServerErrorEvent("Socket is closed", null, e));
+            events.fire(new ServerStoppedEvent());
         }
     }
 
     public void stop() throws IOException {
         listening = false;
 
-        clients.forEach(client -> client.disconnect(DcReason.SERVER_CLOSED));
+        clients.forEach(client -> {
+            try {
+                client.disconnect(DcReason.SERVER_CLOSED);
+            } catch (IOException e) {
+                events.fire(new ServerErrorEvent("Error while disconnecting client", client, e));
+            }
+        });
         serverSocket.close();
 
         events.fire(new ServerStoppedEvent());
@@ -77,11 +83,7 @@ public class Server {
 
     public void send(Packet packet) {
         clients.forEach(c -> {
-            try {
-                c.send(packet);
-            } catch (IOException e) {
-                logger.log(Level.FINE, "Unable to send packet to " + c.getIp(), e);
-            }
+            send(packet);
         });
     }
 
@@ -89,17 +91,13 @@ public class Server {
         try {
             client.send(packet);
         } catch (IOException e) {
-            logger.log(Level.FINE, "Unable to send packet to " + client.getIp(), e);
+            events.fire(new ServerErrorEvent("Unable to send packet", client, e));
         }
     }
 
     public <T> void request(Packet packet, Consumer<T> listener) {
         clients.forEach(c -> {
-            try {
-                c.request(packet, listener);
-            } catch (IOException e) {
-                logger.log(Level.FINE, "Unable to send request to " + c.getIp(), e);
-            }
+            request(c, packet, listener);
         });
     }
 
@@ -107,7 +105,7 @@ public class Server {
         try {
             client.request(packet, listener);
         } catch (IOException e) {
-            logger.log(Level.FINE, "Unable to send request to " + client.getIp(), e);
+            events.fire(new ServerErrorEvent("Unable to send request", client, e));
         }
     }
     // endregion
@@ -133,19 +131,18 @@ public class Server {
     // endregion
 
     // region private handlers
+    @Blocking
     private void handleConnection(Socket clientSocket) {
         ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
 
         clients.add(clientHandler);
         clientHandler.init();
 
-        logger.info("New connection from " + clientHandler.getIp());
         events.fire(new ServerClientConnectedEvent(clientHandler));
         listeners.forEach(l -> l.connected(clientHandler));
 
 
         clientHandler.received(packet -> {
-            logger.info("Packet received " + packet.getClass().getSimpleName());
             events.fire(new ServerReceivedEvent(clientHandler, packet));
             listeners.forEach(l -> l.received(clientHandler, packet));
             packetListeners.computeIfAbsent(packet.getClass(), k -> new ArrayList<>())

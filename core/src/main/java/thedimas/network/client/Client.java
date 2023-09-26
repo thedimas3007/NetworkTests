@@ -1,5 +1,7 @@
 package thedimas.network.client;
 
+import lombok.SneakyThrows;
+import org.jetbrains.annotations.Blocking;
 import thedimas.network.client.events.ClientConnectedEvent;
 import thedimas.network.client.events.ClientDisconnectedEvent;
 import thedimas.network.client.events.ClientErrorEvent;
@@ -50,6 +52,7 @@ public class Client {
     // endregion
 
     // region networking
+    @Blocking
     public void connect() throws IOException {
         socket = new Socket(ip, port);
         listening = true;
@@ -91,12 +94,9 @@ public class Client {
         }
     }
 
+    @SneakyThrows
     public <T extends Packet> void send(T packet) {
-        try {
-            out.writeObject(packet);
-        } catch (IOException e) {
-            events.fire(new ClientErrorEvent("Unable to send packet " + packet.toString(), e));
-        }
+        out.writeObject(packet);
     }
 
     public <T> void request(Packet packet, Consumer<T> listener) {
