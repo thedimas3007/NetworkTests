@@ -5,4 +5,7 @@ plugins {
 dependencies {
     annotationProcessor "org.projectlombok:lombok:$lombokVersion"
     compileOnly "org.projectlombok:lombok:$lombokVersion"
+
+    annotationProcessor "org.jetbrains:annotations:$annotationsVersion"
+    compileOnly "org.jetbrains:annotations:$annotationsVersion"
 }
