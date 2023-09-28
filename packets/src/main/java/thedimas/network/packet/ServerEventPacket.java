@@ -2,7 +2,7 @@ package thedimas.network.packet;
 
 import lombok.*;
 import org.jetbrains.annotations.Nullable;
-import thedimas.network.enums.ServerAction;
+import thedimas.network.enums.ServerEvent;
 
 import java.io.Serializable;
 
@@ -11,7 +11,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ServerActionPacket<T extends Serializable> implements Packet {
-    ServerAction action;
+public class ServerEventPacket<T extends Serializable> implements Packet {
+    ServerEvent event;
     @Nullable T payload;
 }

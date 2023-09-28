@@ -12,8 +12,8 @@ import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 @Getter
 @SuppressWarnings({"unused", "unchecked"})
@@ -31,11 +31,20 @@ public class ServerClientHandler {
 
     private boolean listening;
     private boolean disconnected;
+    private final boolean closeTimeout;
+
+    private final AtomicLong lastReceived = new AtomicLong();
     // endregion
 
     // region constructor
     ServerClientHandler(Socket socket) {
         this.socket = socket;
+        this.closeTimeout = false;
+    }
+
+    ServerClientHandler(Socket socket, boolean closeTimeout) {
+        this.socket = socket;
+        this.closeTimeout = closeTimeout;
     }
     // endregion
 
@@ -56,9 +65,24 @@ public class ServerClientHandler {
 
     @Blocking
     void listen() {
+        lastReceived.set(System.currentTimeMillis());
         listening = true;
         disconnected = false;
         try {
+            new Thread(() -> {
+                while (true) {
+                    if (lastReceived.get() + Server.TIMEOUT < System.currentTimeMillis()) {
+                        break;
+                    }
+                }
+
+                try {
+                    disconnect(DcReason.TIMEOUT);
+                } catch (IOException e) {
+                    close();
+                }
+            }).start();
+
             while (listening) {
                 Object receivedObject = in.readObject();
                 handlePacket(receivedObject);
@@ -125,6 +149,7 @@ public class ServerClientHandler {
     // region private handlers
     private void handlePacket(Object object) {
         if (object instanceof Packet packet) {
+            lastReceived.set(System.currentTimeMillis());
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
             } else {

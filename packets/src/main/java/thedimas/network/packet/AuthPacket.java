@@ -9,4 +9,5 @@ import lombok.*;
 @Builder
 public class AuthPacket implements Packet {
     byte[] password;
+    String serverKey;
 }

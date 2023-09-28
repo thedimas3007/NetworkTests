@@ -14,6 +14,7 @@ import thedimas.network.packet.DisconnectPacket;
 import thedimas.network.packet.Packet;
 import thedimas.network.packet.RequestPacket;
 import thedimas.network.packet.ResponsePacket;
+import thedimas.network.server.Server;
 import thedimas.network.server.ServerClientHandler;
 
 import java.io.*;
@@ -22,11 +23,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @SuppressWarnings({"unused", "unchecked"})
 public class Client {
     // region variables
+    public static int TIMEOUT = 15 * 1000;
+
     private final List<ClientListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<Consumer<Packet>>> packetListeners = new HashMap<>();
     private final Map<Integer, Consumer<Object>> responseListeners = new HashMap<>(); // listeners for responses from server
@@ -42,12 +46,22 @@ public class Client {
 
     private boolean listening;
     private boolean disconnected;
+    private final boolean closeTimeout;
+
+    private final AtomicLong lastReceived = new AtomicLong();
     // endregion
 
     // region constructor
     public Client(String ip, int port) {
         this.ip = ip;
         this.port = port;
+        this.closeTimeout = false;
+    }
+
+    public Client(String ip, int port, boolean closeTimeout) {
+        this.ip = ip;
+        this.port = port;
+        this.closeTimeout = closeTimeout;
     }
     // endregion
 
@@ -55,12 +69,24 @@ public class Client {
     @Blocking
     public void connect() throws IOException {
         socket = new Socket(ip, port);
+
+        lastReceived.set(System.currentTimeMillis());
         listening = true;
         disconnected = false;
 
         try {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
+
+            new Thread(() -> {
+                while (true) {
+                    if (lastReceived.get() + Server.TIMEOUT < System.currentTimeMillis()) {
+                        break;
+                    }
+                }
+                disconnect(DcReason.TIMEOUT);
+            }).start();
+
 
             events.fire(new ClientConnectedEvent());
             listeners.forEach(ClientListener::connected);
@@ -75,22 +101,25 @@ public class Client {
             } else {
                 handleDisconnect(DcReason.CONNECTION_CLOSED);
             }
-            disconnect();
+            disconnect(DcReason.DISCONNECTED);
         } catch (ClassNotFoundException e) {
             events.fire(new ClientErrorEvent("Class not found", e));
         }
     }
 
-    public void disconnect() {
+    public void disconnect(DcReason reason) {
+        send(new DisconnectPacket(reason));
+        close();
+    }
+
+    private void close() {
         try {
             listening = false;
             disconnected = true;
-
             if (in != null) in.close();
             if (out != null) out.close();
             socket.close();
-        } catch (IOException e) {
-            events.fire(new ClientErrorEvent("Error while disconnecting client", e));
+        } catch (IOException ignored) {
         }
     }
 
@@ -134,6 +163,7 @@ public class Client {
     // region private handlers
     private void handlePacket(Object object) {
         if (object instanceof Packet packet) {
+            lastReceived.set(System.currentTimeMillis());
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
             } else {
@@ -156,8 +186,7 @@ public class Client {
         if (!disconnected) {
             events.fire(new ClientDisconnectedEvent(reason));
             listeners.forEach(l -> l.disconnected(reason));
-
-            disconnect();
+            close();
         }
     }
     // endregion

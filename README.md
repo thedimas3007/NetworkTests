@@ -17,8 +17,8 @@ Output jar should be in `build/libs`.
 - [ ] More useful methods
 - [ ] Timeout
 - [ ] Packet spam detection
-- [ ] Error event
-
+- [x] Error event
+- [ ] Scheduling tasks
 
 #### Server
 

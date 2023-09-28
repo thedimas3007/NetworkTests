@@ -2,6 +2,7 @@ package thedimas.network.test;
 
 import thedimas.network.packet.*;
 import thedimas.network.server.Server;
+import thedimas.network.server.events.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -13,21 +14,28 @@ public class TestServer {
     public static void main(String[] args) throws IOException {
         Server server = new Server(9999);
 
-        server.onRequest(ObjectPacket.class, (serverClientHandler, id, objectPacket) -> {
-            logger.info(serverClientHandler.getIp() + ": " + objectPacket.toString());
-            try {
-                serverClientHandler.response(id, "Lol");
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "no no no", e);
-            }
+        server.onEvent(ServerStartedEvent.class, event -> {
+            logger.info("Server started");
         });
 
-        server.onRequest(PingPacket.class, (serverClientHandler, id, pingPacket) -> {
-            try {
-                serverClientHandler.response(id, pingPacket.getCreated());
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "no no no", e);
-            }
+        server.onEvent(ServerStoppedEvent.class, event -> {
+            logger.info("Server stopped");
+        });
+
+        server.onEvent(ServerClientConnectedEvent.class, event -> {
+            logger.info("New client: " + event.getClient().getIp());
+        });
+
+        server.onEvent(ServerClientDisconnectedEvent.class, event -> {
+            logger.info("Client " + event.getClient().getIp() +  " disconnected: " + event.getReason());
+        });
+
+        server.onEvent(ServerReceivedEvent.class, event -> {
+            logger.info("Client " + event.getClient().getIp() +  " sent a packet: " + event.getPacket());
+        });
+
+        server.onPacket(KeepAlivePacket.class, (client, packet) -> {
+            logger.info("Client " + client.getIp() + " wants to be alive");
         });
 
         new Thread(() -> {

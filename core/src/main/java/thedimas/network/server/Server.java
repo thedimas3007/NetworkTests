@@ -1,5 +1,6 @@
 package thedimas.network.server;
 
+import lombok.Setter;
 import org.jetbrains.annotations.Blocking;
 import thedimas.network.enums.DcReason;
 import thedimas.network.event.Event;
@@ -19,12 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 
 @SuppressWarnings({"unused", "unchecked"})
 public class Server {
     // region variables
+    public static int TIMEOUT = 15 * 1000;
+
     private final List<ServerListener> listeners = new ArrayList<>();
     private final Map<Class<?>, List<BiConsumer<ServerClientHandler, Packet>>> packetListeners = new HashMap<>();
     private final Map<Class<?>, List<TripleConsumer<ServerClientHandler, Integer, Packet>>> requestListeners = new HashMap<>();
@@ -36,11 +38,18 @@ public class Server {
     private final int port;
 
     private boolean listening;
+    private final boolean closeTimeout;
     // endregion
 
     // region constructor
     public Server(int port) {
         this.port = port;
+        this.closeTimeout = false;
+    }
+
+    public Server(int port, boolean closeTimeout) {
+        this.port = port;
+        this.closeTimeout = closeTimeout;
     }
     // endregion
 
@@ -133,7 +142,7 @@ public class Server {
     // region private handlers
     @Blocking
     private void handleConnection(Socket clientSocket) {
-        ServerClientHandler clientHandler = new ServerClientHandler(clientSocket);
+        ServerClientHandler clientHandler = new ServerClientHandler(clientSocket, closeTimeout);
 
         clients.add(clientHandler);
         clientHandler.init();
