@@ -1,6 +1,5 @@
 package thedimas.network.server;
 
-import lombok.Setter;
 import org.jetbrains.annotations.Blocking;
 import thedimas.network.enums.DcReason;
 import thedimas.network.event.Event;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -31,13 +31,15 @@ public class Server {
     private final Map<Class<?>, List<BiConsumer<ServerClientHandler, Packet>>> packetListeners = new HashMap<>();
     private final Map<Class<?>, List<TripleConsumer<ServerClientHandler, Integer, Packet>>> requestListeners = new HashMap<>();
     private final EventListener events = new EventListener();
+    private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
     private final List<ServerClientHandler> clients = new ArrayList<>();
     private ServerSocket serverSocket;
 
-    private final int port;
+    private volatile boolean listening;
+    private volatile boolean stopping;
 
-    private boolean listening;
+    private final int port;
     private final boolean closeTimeout;
     // endregion
 
@@ -59,6 +61,7 @@ public class Server {
         serverSocket = new ServerSocket(port);
 
         listening = true;
+        stopping = false;
 
         events.fire(new ServerStartedEvent());
         listeners.forEach(ServerListener::started);
@@ -66,34 +69,42 @@ public class Server {
         try {
             while (listening) {
                 Socket clientSocket = serverSocket.accept();
-                new Thread(() -> handleConnection(clientSocket)).start();
+                executor.execute(() -> handleConnection(clientSocket));
             }
         } catch (SocketException e) {
             events.fire(new ServerErrorEvent("Socket is closed", null, e));
-            events.fire(new ServerStoppedEvent());
+            if (!stopping) {
+                events.fire(new ServerStoppedEvent());
+            }
         }
     }
 
-    public void stop() throws IOException {
-        listening = false;
+    public void stop() {
+        try {
+            listening = false;
+            stopping = true;
 
-        clients.forEach(client -> {
-            try {
-                client.disconnect(DcReason.SERVER_CLOSED);
-            } catch (IOException e) {
-                events.fire(new ServerErrorEvent("Error while disconnecting client", client, e));
-            }
-        });
-        serverSocket.close();
+            clients.forEach(client -> {
+                try {
+                    client.disconnect(DcReason.SERVER_CLOSED);
+                } catch (IOException e) {
+                    events.fire(new ServerErrorEvent("Error while disconnecting client", client, e));
+                }
+            });
 
-        events.fire(new ServerStoppedEvent());
-        listeners.forEach(ServerListener::stopped);
+            serverSocket.close();
+
+            executor.shutdown();
+            executor.awaitTermination(5, TimeUnit.MINUTES);
+
+            events.fire(new ServerStoppedEvent());
+            listeners.forEach(ServerListener::stopped);
+        } catch (InterruptedException | IOException ignored) {
+        }
     }
 
     public void send(Packet packet) {
-        clients.forEach(c -> {
-            send(packet);
-        });
+        clients.forEach(c -> send(packet));
     }
 
     public void send(ServerClientHandler client, Packet packet) {
@@ -105,9 +116,7 @@ public class Server {
     }
 
     public <T> void request(Packet packet, Consumer<T> listener) {
-        clients.forEach(c -> {
-            request(c, packet, listener);
-        });
+        clients.forEach(c -> request(c, packet, listener));
     }
 
     public <T> void request(ServerClientHandler client, Packet packet, Consumer<T> listener) {
@@ -138,6 +147,20 @@ public class Server {
                 .add((TripleConsumer<ServerClientHandler, Integer, Packet>) consumer);
     }
     // endregion
+
+    // region executors
+    public ScheduledFuture<?> schedule(Runnable runnable, long startDelay, long period) {
+        return executor.scheduleAtFixedRate(runnable, startDelay, period, TimeUnit.SECONDS);
+    }
+
+    public ScheduledFuture<?> schedule(Runnable runnable, long period) {
+        return schedule(runnable, 0, period);
+    }
+
+    public void execute(Runnable runnable) {
+        executor.execute(runnable);
+    }
+    // endregion executors
 
     // region private handlers
     @Blocking

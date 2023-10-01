@@ -12,7 +12,9 @@ import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Getter
@@ -24,16 +26,17 @@ public class ServerClientHandler {
     private Consumer<DcReason> disconnectListener = reason -> {
     };
     private final Map<Integer, Consumer<Object>> responseListeners = new HashMap<>();
+    private final ExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private final Socket socket;
 
-    private boolean listening;
-    private boolean disconnected;
-    private final boolean closeTimeout;
+    private volatile boolean listening;
+    private volatile boolean disconnected;
+    private volatile long lastReceived = 0;
 
-    private final AtomicLong lastReceived = new AtomicLong();
+    private final boolean closeTimeout;
     // endregion
 
     // region constructor
@@ -65,13 +68,13 @@ public class ServerClientHandler {
 
     @Blocking
     void listen() {
-        lastReceived.set(System.currentTimeMillis());
+        lastReceived = System.currentTimeMillis();
         listening = true;
         disconnected = false;
         try {
-            new Thread(() -> {
+            executor.execute(() -> {
                 while (true) {
-                    if (lastReceived.get() + Server.TIMEOUT < System.currentTimeMillis()) {
+                    if (lastReceived + Server.TIMEOUT < System.currentTimeMillis()) {
                         break;
                     }
                 }
@@ -81,7 +84,7 @@ public class ServerClientHandler {
                 } catch (IOException e) {
                     close();
                 }
-            }).start();
+            });
 
             while (listening) {
                 Object receivedObject = in.readObject();
@@ -114,10 +117,14 @@ public class ServerClientHandler {
         try {
             listening = false;
             disconnected = true;
+
             if (in != null) in.close();
             if (out != null) out.close();
             socket.close();
-        } catch (IOException ignored) {
+
+            executor.shutdown();
+            executor.awaitTermination(5, TimeUnit.MINUTES);
+        } catch (InterruptedException | IOException ignored) {
         }
     }
 
@@ -149,7 +156,7 @@ public class ServerClientHandler {
     // region private handlers
     private void handlePacket(Object object) {
         if (object instanceof Packet packet) {
-            lastReceived.set(System.currentTimeMillis());
+            lastReceived = System.currentTimeMillis();
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
             } else {

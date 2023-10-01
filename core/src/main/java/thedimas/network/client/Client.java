@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 @SuppressWarnings({"unused", "unchecked"})
@@ -36,6 +36,7 @@ public class Client {
     private final Map<Integer, Consumer<Object>> responseListeners = new HashMap<>(); // listeners for responses from server
     private final Map<Class<?>, List<TripleConsumer<ServerClientHandler, Integer, Packet>>> requestListeners = new HashMap<>(); // listeners for server requests
     private final EventListener events = new EventListener();
+    private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
     private Socket socket;
     private ObjectOutputStream out;
@@ -43,12 +44,11 @@ public class Client {
 
     private final String ip;
     private final int port;
-
-    private boolean listening;
-    private boolean disconnected;
     private final boolean closeTimeout;
 
-    private final AtomicLong lastReceived = new AtomicLong();
+    private volatile boolean listening;
+    private volatile boolean disconnected;
+    private volatile long lastReceived = 0;
     // endregion
 
     // region constructor
@@ -70,7 +70,7 @@ public class Client {
     public void connect() throws IOException {
         socket = new Socket(ip, port);
 
-        lastReceived.set(System.currentTimeMillis());
+        lastReceived = System.currentTimeMillis();
         listening = true;
         disconnected = false;
 
@@ -78,15 +78,14 @@ public class Client {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
 
-            new Thread(() -> {
+            executor.execute(() -> {
                 while (true) {
-                    if (lastReceived.get() + Server.TIMEOUT < System.currentTimeMillis()) {
+                    if (lastReceived + Server.TIMEOUT < System.currentTimeMillis()) {
                         break;
                     }
                 }
                 disconnect(DcReason.TIMEOUT);
-            }).start();
-
+            });
 
             events.fire(new ClientConnectedEvent());
             listeners.forEach(ClientListener::connected);
@@ -108,6 +107,10 @@ public class Client {
     }
 
     public void disconnect(DcReason reason) {
+        if (disconnected) {
+            return;
+        }
+
         send(new DisconnectPacket(reason));
         close();
     }
@@ -119,7 +122,9 @@ public class Client {
             if (in != null) in.close();
             if (out != null) out.close();
             socket.close();
-        } catch (IOException ignored) {
+            executor.shutdown();
+            executor.awaitTermination(5, TimeUnit.MINUTES);
+        } catch (InterruptedException | IOException ignored) {
         }
     }
 
@@ -160,10 +165,24 @@ public class Client {
 
     // endregion
 
+    // region executors
+    public ScheduledFuture<?> schedule(Runnable runnable, long startDelay, long period) {
+        return executor.scheduleAtFixedRate(runnable, startDelay, period, TimeUnit.SECONDS);
+    }
+
+    public ScheduledFuture<?> schedule(Runnable runnable, long period) {
+        return schedule(runnable, 0, period);
+    }
+
+    public void execute(Runnable runnable) {
+        executor.execute(runnable);
+    }
+    // endregion
+
     // region private handlers
     private void handlePacket(Object object) {
         if (object instanceof Packet packet) {
-            lastReceived.set(System.currentTimeMillis());
+            lastReceived = System.currentTimeMillis();
             if (packet instanceof DisconnectPacket disconnectPacket) {
                 handleDisconnect(disconnectPacket.getReason());
             } else {

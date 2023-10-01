@@ -38,6 +38,12 @@ public class TestServer {
             logger.info("Client " + client.getIp() + " wants to be alive");
         });
 
+        server.onEvent(ServerErrorEvent.class, event -> {
+            logger.info("Server error: " + event.toString());
+        });
+
+        server.schedule(() -> logger.info("aaa"), 2);
+
         new Thread(() -> {
             try {
                 server.start();
