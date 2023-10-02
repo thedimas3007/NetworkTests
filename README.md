@@ -15,10 +15,10 @@ Output jar should be in `build/libs`.
 - [ ] Review, clean and improve code structure
 - [ ] Review JavaDoc
 - [ ] More useful methods
-- [ ] Timeout
+- [x] Timeout
 - [ ] Packet spam detection
 - [x] Error event
-- [ ] Scheduling tasks
+- [x] Scheduling tasks
 
 #### Server
 

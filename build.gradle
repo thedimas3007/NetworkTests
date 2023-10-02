@@ -1,6 +1,6 @@
 apply plugin: "java"
 apply plugin: "nebula-aggregate-javadocs"
-
+apply plugin: "maven-publish"
 
 version "1.0"
 
@@ -41,6 +41,17 @@ subprojects {
         archiveFileName = "${project.archivesBaseName}.jar"
         from {
             configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId project.group
+                artifactId project.name
+                version project.version
+                from components.java
+            }
         }
     }
 }
