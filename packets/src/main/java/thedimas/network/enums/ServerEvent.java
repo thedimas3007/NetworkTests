@@ -4,5 +4,5 @@ public enum ServerEvent {
     START, STOP, RESTART,
     JOIN, LEAVE,
     LOAD, GAME_OVER,
-    MESSAGE
+    MESSAGE, DISCORD_MESSAGE
 }
