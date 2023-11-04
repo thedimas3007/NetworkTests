@@ -1,9 +1,4 @@
-apply plugin: "java"
 apply plugin: "nebula-aggregate-javadocs"
-
-
-version "1.0"
-
 
 buildscript {
     repositories { jcenter() }
@@ -20,7 +15,15 @@ ext {
     annotationsVersion = '24.0.0'
 }
 
+allprojects {
+    group "com.github.thedimas3007.Packets"
+    version "1.0"
+}
+
 subprojects {
+    apply plugin: "java"
+    apply plugin: "maven-publish"
+
     sourceCompatibility = JavaVersion.VERSION_16
     targetCompatibility = JavaVersion.VERSION_16
 
@@ -41,6 +44,17 @@ subprojects {
         archiveFileName = "${project.archivesBaseName}.jar"
         from {
             configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId project.group
+                artifactId project.name
+                version project.version
+                from components.java
+            }
         }
     }
 }

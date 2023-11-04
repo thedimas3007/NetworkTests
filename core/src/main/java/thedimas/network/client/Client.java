@@ -119,8 +119,10 @@ public class Client {
         try {
             listening = false;
             disconnected = true;
+
             if (in != null) in.close();
             if (out != null) out.close();
+
             socket.close();
             executor.shutdown();
             executor.awaitTermination(5, TimeUnit.MINUTES);

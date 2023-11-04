@@ -10,6 +10,7 @@ import thedimas.network.packet.RequestPacket;
 import thedimas.network.server.events.*;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -39,17 +40,32 @@ public class Server {
     private volatile boolean listening;
     private volatile boolean stopping;
 
+    private final String address;
     private final int port;
     private final boolean closeTimeout;
     // endregion
 
     // region constructor
     public Server(int port) {
+        this.address = null;
         this.port = port;
         this.closeTimeout = false;
     }
 
     public Server(int port, boolean closeTimeout) {
+        this.address = null;
+        this.port = port;
+        this.closeTimeout = closeTimeout;
+    }
+
+    public Server(String address, int port) {
+        this.address = address;
+        this.port = port;
+        this.closeTimeout = false;
+    }
+
+    public Server(String address, int port, boolean closeTimeout) {
+        this.address = address;
         this.port = port;
         this.closeTimeout = closeTimeout;
     }
@@ -58,7 +74,11 @@ public class Server {
     // region networking
     @Blocking
     public void start() throws IOException {
-        serverSocket = new ServerSocket(port);
+        if (address == null) {
+            serverSocket = new ServerSocket(port);
+        } else {
+            serverSocket = new ServerSocket(port, 0, InetAddress.getByName(address));
+        }
 
         listening = true;
         stopping = false;
